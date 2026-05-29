@@ -8,9 +8,7 @@
       "status": "Active",
       "passwordHash": "$2b$10$IsQcWmTZWW4rvMD./MfPBuLfhVyJ0ut9HfikuXJ8r9yeus6cCgdoO",
       "avatarUrl": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
-      "lastLogin": "2026-05-29T12:30:40.322Z",
-      "failedAttempts": 0,
-      "lockoutUntil": null
+      "lastLogin": "2026-05-29T08:59:25.751Z"
     },
     {
       "id": "usr-2",
@@ -98,7 +96,7 @@
       "phone": "+254 701 444 333",
       "nationalId": "31829302",
       "joinedDate": "2024-05-19T14:45:00Z",
-      "status": "Suspended",
+      "status": "Active",
       "savingsBalance": 310000,
       "activeLoansCount": 1,
       "totalBorrowed": 450000,
@@ -218,14 +216,14 @@
       "interestRate": 1.2,
       "tenureMonths": 24,
       "purpose": "Commercial Truck Importation Mortgage",
-      "status": "Overdue",
+      "status": "Approved",
       "guarantors": [
         "SACCO-1021",
         "SACCO-1022"
       ],
       "applicationDate": "2025-08-10T10:00:00Z",
       "approvalDate": "2025-08-12T14:00:00Z",
-      "outstandingBalance": 302416,
+      "outstandingBalance": 300000,
       "monthlyInstallment": 24150,
       "dueDate": "2026-06-12T00:00:00Z",
       "riskScore": "Medium",
@@ -276,16 +274,16 @@
         {
           "installmentNumber": 7,
           "dueDate": "2026-03-12T00:00:00Z",
-          "amountDue": 25358,
+          "amountDue": 24150,
           "amountPaid": 0,
-          "status": "Overdue"
+          "status": "Unpaid"
         },
         {
           "installmentNumber": 8,
           "dueDate": "2026-04-12T00:00:00Z",
-          "amountDue": 25358,
+          "amountDue": 24150,
           "amountPaid": 0,
-          "status": "Overdue"
+          "status": "Unpaid"
         }
       ]
     },
@@ -589,28 +587,6 @@
       "hash": "c1f2e134345df283eeb05611f0382568a60c0032d30c579793efa646c6cff165",
       "prevHash": "d0727a69db8f64b7b610993616bbe4031eb3fc2f43bbd65f09ba09c84c20d158",
       "isIntegrityOk": true
-    },
-    {
-      "id": "aud-9-5839",
-      "timestamp": "2026-05-29T12:30:40.325Z",
-      "action": "User Session Sparked",
-      "performedByEmail": "admin@sacco.co.ke",
-      "performedByRole": "Admin",
-      "details": "Logged in successfully. Access token & 7d refresh token initialized. Verification OTP generated: 556349",
-      "hash": "2e135093a1d03368eda0dff4bc23e5f4d5723503a7dcc2e3cc33dbedd40e173b",
-      "prevHash": "c1f2e134345df283eeb05611f0382568a60c0032d30c579793efa646c6cff165",
-      "isIntegrityOk": true
-    },
-    {
-      "id": "aud-10-1307",
-      "timestamp": "2026-05-29T12:30:40.903Z",
-      "action": "Loan Portfolio Overdue State",
-      "performedByEmail": "system-vigilance@apexsacco.co.ke",
-      "performedByRole": "Admin",
-      "details": "Loan LN-5292 for Member Abel Kiprop flagged Overdue. Penalties compiled.",
-      "hash": "122774d879db987f07d7b811184fd8338c654353c6aab86f1b51245c82ae9e66",
-      "prevHash": "2e135093a1d03368eda0dff4bc23e5f4d5723503a7dcc2e3cc33dbedd40e173b",
-      "isIntegrityOk": true
     }
   ],
   "settings": {
@@ -624,25 +600,6 @@
     "registrationFee": 1000,
     "penaltyOverdueRate": 5
   },
-  "otpSessions": [
-    {
-      "id": "otp-1780057840283-8232",
-      "userId": "usr-1",
-      "userEmail": "admin@sacco.co.ke",
-      "otpCode": "556349",
-      "expiresAt": "2026-05-29T12:40:40.283Z",
-      "isVerified": false,
-      "attempts": 0
-    }
-  ],
-  "refreshTokens": [
-    {
-      "id": "rt-1780057840308-519",
-      "userId": "usr-1",
-      "token": "556ec4121134c55d51dfb9afd8bd312e0737bde82d96f437c163a7ae79f87f9cfa468b9c890ec898",
-      "expiresAt": "2026-06-05T12:30:40.307Z",
-      "createdAt": "2026-05-29T12:30:40.308Z",
-      "revoked": false
-    }
-  ]
+  "otpSessions": [],
+  "refreshTokens": []
 }
