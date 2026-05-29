@@ -1,0 +1,245 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+/* Custom scrollbar to keep layout premium */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+.light ::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
+.light ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+.light ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* --- ADAPTIVE LIGHT MODE SYSTEM OVERRIDES --- */
+
+/* App Shell Base Canvas Backgrounds */
+html.light body,
+html.light .min-h-screen {
+  background-color: #f3f4f6 !important;
+  color: #1e293b !important;
+}
+
+/* Sidebar navigation background adjustments */
+html.light aside,
+html.light aside.bg-\[\#0d1425\] {
+  background-color: #ffffff !important;
+  border-right: 1px solid #e2e8f0 !important;
+  color: #1e293b !important;
+}
+
+/* Header bar adjustments */
+html.light header.bg-\[\#090d16\] {
+  background-color: #ffffff !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  color: #1e293b !important;
+}
+
+/* Central main dashboard panel backgrounds, cards, sheets, blocks */
+html.light .bg-\[\#101726\],
+html.light .bg-\[\#111726\],
+html.light .bg-\[\#111726\]\/80,
+html.light .bg-\[\#12192c\]\/90,
+html.light .bg-slate-900,
+html.light .bg-slate-900\/50,
+html.light .bg-slate-900\/60,
+html.light .bg-slate-950,
+html.light .bg-slate-950\/80,
+html.light .bg-\[\#101726\]\/80,
+html.light .bg-slate-800\/20,
+html.light .bg-slate-900\/40,
+html.light .bg-\[\#0d121f\],
+html.light .bg-slate-900\/30,
+html.light .bg-\[\#17253d\] {
+  background-color: #ffffff !important;
+  color: #1e293b !important;
+  border-color: #e2e8f0 !important;
+}
+
+/* Interactive hover adjustments for lists and records */
+html.light .hover\:bg-slate-900\/30:hover,
+html.light .hover\:bg-slate-850:hover,
+html.light .hover\:bg-\[\#151e33\]:hover,
+html.light .hover\:bg-pnl-alt:hover,
+html.light .hover\:bg-slate-900\/40:hover,
+html.light .hover\:bg-slate-900\/50:hover {
+  background-color: #f1f5f9 !important;
+}
+
+/* Force standard text color adjustments for titles and descriptions */
+html.light .text-white,
+html.light .text-\[\#ffffff\],
+html.light h1, html.light h2, html.light h3, html.light h4, html.light h5, html.light h6 {
+  color: #0f172a !important;
+}
+
+/* Handle standard slate grey texts */
+html.light .text-slate-100 {
+  color: #1e293b !important;
+}
+html.light .text-slate-200,
+html.light .text-slate-300,
+html.light .text-slate-355 {
+  color: #334155 !important;
+}
+html.light .text-slate-400,
+html.light .text-slate-350,
+html.light .text-slate-450 {
+  color: #475569 !important;
+}
+html.light .text-slate-500 {
+  color: #64748b !important;
+}
+
+/* Sidebar navigation buttons context */
+html.light aside button {
+  color: #475569 !important;
+}
+html.light aside button:hover {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+html.light aside button[id^="sidebar-item-"] {
+  border-color: transparent !important;
+}
+html.light aside button[id^="sidebar-item-"].bg-blue-600\/15 {
+  background-color: rgba(59, 130, 246, 0.12) !important;
+  color: #1d4ed8 !important;
+}
+
+/* Border overrides */
+html.light .border-slate-800,
+html.light .border-slate-800\/80,
+html.light .border-slate-700,
+html.light .border-\[\#1e293b\]\/40,
+html.light .border-\[\#1e293b\]\/50,
+html.light .border-slate-850 {
+  border-color: #e2e8f0 !important;
+}
+
+/* Global Forms inputs & selectivity in Light Theme */
+html.light input[type="text"],
+html.light input[type="number"],
+html.light input[type="email"],
+html.light input[type="password"],
+html.light input[type="url"],
+html.light select,
+html.light textarea {
+  background-color: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+html.light input:focus,
+html.light select:focus,
+html.light textarea:focus {
+  border-color: #3b82f6 !important;
+  ring: 2px rgba(59, 130, 246, 0.15) !important;
+}
+html.light input::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Custom exception cases to preserve readable highlight color structures */
+
+/* Emerald alerts and success indicators */
+html.light .bg-emerald-500\/10 {
+  background-color: rgba(16, 185, 129, 0.12) !important;
+}
+html.light .bg-emerald-500\/10 span,
+html.light .bg-emerald-500\/10 div,
+html.light .text-emerald-400 {
+  color: #047857 !important;
+}
+
+/* Amber warning highlights */
+html.light .bg-amber-500\/10 {
+  background-color: rgba(245, 158, 11, 0.12) !important;
+}
+html.light .text-amber-500 {
+  color: #b45309 !important;
+}
+
+/* Rose error alerts */
+html.light .bg-rose-500\/10,
+html.light .bg-rose-600\/10 {
+  background-color: rgba(244, 63, 94, 0.12) !important;
+}
+html.light .text-rose-300,
+html.light .text-rose-400 {
+  color: #be123c !important;
+}
+
+/* Safe protection of primary focus action buttons (blue/green buttons must keep white crisp lettering) */
+html.light button.bg-blue-600,
+html.light button.bg-blue-500,
+html.light button.bg-emerald-600,
+html.light button.bg-rose-600,
+html.light .bg-blue-600,
+html.light .bg-blue-500 {
+  color: #ffffff !important;
+}
+html.light button.bg-blue-600 span,
+html.light button.bg-blue-500 span,
+html.light button.bg-emerald-600 span,
+html.light .bg-linear-to-r span,
+html.light button.bg-linear-to-r span,
+html.light button.bg-linear-to-tr span {
+  color: #ffffff !important;
+}
+html.light .bg-linear-to-tr from-blue-600 {
+  background-image: linear-gradient(to top right, #2563eb, #6366f1) !important;
+}
+html.light .text-slate-400.font-bold.font-mono {
+  color: #4f46e5 !important;
+}
+
+/* Recharts coordinates markers color formatting for light canvas visibility */
+html.light .recharts-cartesian-grid-horizontal line,
+html.light .recharts-cartesian-grid-vertical line {
+  stroke: #e2e8f0 !important;
+}
+html.light .recharts-text {
+  fill: #475569 !important;
+}
+
+/* Table header background formatting tidy up */
+html.light table thead tr {
+  background-color: #f8fafc !important;
+}
+html.light th {
+  color: #475569 !important;
+  font-weight: 600 !important;
+}
+
+/* Blockchain ledger hash strings, security codes readable contrast */
+html.light .font-mono.text-slate-500,
+html.light .font-mono.text-slate-400 {
+  color: #4f5e74 !important;
+}
+html.light p.font-mono.text-cyan-400 {
+  color: #0369a1 !important;
+}
+html.light .bg-[#111827] {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}

@@ -1,0 +1,48 @@
+version: "3.8"
+
+services:
+  # -----------------------------------------------------------
+  # Core SACCO Digital Banking Server
+  # -----------------------------------------------------------
+  sacco-core:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sacco_digital_core
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - JWT_ACCESS_SECRET=sacco-premium-gateway-access-token-93812
+      - JWT_REFRESH_SECRET=sacco-premium-gateway-refresh-token-82012
+      - MPESA_WEBHOOK_SECRET=mpesa-shared-sacco-token-93012
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - DATABASE_URL=postgresql://saccouser:saccopass123@postgres-db:5432/saccoless?schema=public
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+
+  # -----------------------------------------------------------
+  # Postgres persistence engine for high volume ledgers
+  # -----------------------------------------------------------
+  postgres-db:
+    image: postgres:15-alpine
+    container_name: sacco_postgres_ledger
+    restart: always
+    environment:
+      - POSTGRES_USER=saccouser
+      - POSTGRES_PASSWORD=saccopass123
+      - POSTGRES_DB=saccoless
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U saccouser -d saccoless"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:

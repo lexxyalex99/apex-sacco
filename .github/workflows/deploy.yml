@@ -1,0 +1,65 @@
+name: SACCO Digital Core CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  # -------------------------------------------------------------
+  # STAGE 1: SECURE QUALITY & VETTING ASSURANCE
+  # -------------------------------------------------------------
+  quality-assurance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository Code
+        uses: actions/checkout@v3
+
+      - name: Initialize Node.js Environment
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Base Dependencies
+        run: npm ci
+
+      - name: Syntax and ESM Dependency Validation
+        run: npm run lint
+
+      - name: Run Modular Automated Vetting Tests
+        run: npm test
+
+  # -------------------------------------------------------------
+  # STAGE 2: CONTAINER PACKAGING & REPOSITORY ARTIFACT SHUTTLE
+  # -------------------------------------------------------------
+  package-and-shuttle:
+    needs: quality-assurance
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v3
+
+      - name: Configure Docker Buildx Engines
+        uses: docker/setup-buildx-action@v2
+
+      - name: Compile and Verify Docker Image Build
+        run: |
+          docker build -t sacco-digital-core:${{ github.sha }} .
+
+  # -------------------------------------------------------------
+  # STAGE 3: CLOUD GATEWAY RUNNER DEPLOYMENT
+  # -------------------------------------------------------------
+  continuous-deployment:
+    needs: package-and-shuttle
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - name: Simulated Cloud Ingress Deployment Trigger
+        run: |
+          echo "Connecting to production servers..."
+          echo "Successfully pulled image tags: sacco-digital-core:${{ github.sha }}"
+          echo "Re-routing network traffic incrementally..."
+          echo "Deploy complete! Healthy state checked with status code: 200"

@@ -1,0 +1,19 @@
+{
+  "name": "SACCO Management System",
+  "short_name": "ApexSacco",
+  "description": "An enterprise-grade, secure, and modern fintech-style SACCO Management System.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "categories": ["finance", "business"],
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "192x192 256x256 512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

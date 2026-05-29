@@ -1,0 +1,152 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String         @id @default(cuid())
+  email         String         @unique
+  role          String         // 'Admin' | 'Loan Officer' | 'Accountant' | 'Member'
+  fullName      String
+  memberId      String?        @unique // Link to Member
+  status        String         @default("Active") // 'Active' | 'Suspended'
+  avatarUrl     String?
+  passwordHash  String
+  lastLogin     DateTime?      @updatedAt
+  refreshTokens RefreshToken[]
+  otpSessions   OTPSession[]
+
+  @@index([email])
+}
+
+model Member {
+  id                String         @id @default(cuid())
+  memberId          String         @unique // e.g. "SACCO-1021"
+  fullName          String
+  email             String         @unique
+  phone             String
+  nationalId        String         @unique
+  joinedDate        DateTime       @default(now())
+  status            String         @default("Active") // 'Active' | 'Suspended'
+  savingsBalance    Float          @default(0.0)
+  activeLoansCount  Int            @default(0)
+  totalBorrowed     Float          @default(0.0)
+  totalRepaid       Float          @default(0.0)
+  dividendsPaid     Float          @default(0.0)
+  tier              String         @default("Bronze") // 'Bronze' | 'Silver' | 'Gold' | 'Platinum'
+  avatarUrl         String
+
+  @@index([memberId])
+  @@index([email])
+}
+
+model Loan {
+  id                  String                 @id @default(cuid())
+  loanId              String                 @unique // e.g. "LN-5291"
+  memberId            String
+  memberName          String
+  amount              Float
+  interestRate        Float
+  tenureMonths        Int
+  purpose             String
+  status              String                 @default("Pending") // 'Pending' | 'Approved' | 'Rejected' | 'Overdue' | 'Fully Paid'
+  guarantors          String                 // Serialized JSON string of guarantor member IDs
+  applicationDate     DateTime               @default(now())
+  approvalDate        DateTime?
+  outstandingBalance  Float
+  monthlyInstallment  Float
+  dueDate             DateTime
+  riskScore           String                 @default("Low") // 'Low' | 'Medium' | 'High'
+  riskReason          String
+  repaymentSchedule   RepaymentInstallment[]
+
+  @@index([loanId])
+  @@index([memberId])
+}
+
+model RepaymentInstallment {
+  id                String   @id @default(cuid())
+  loanId            String
+  installmentNumber Int
+  dueDate           DateTime
+  amountDue         Float
+  amountPaid        Float    @default(0.0)
+  status            String   @default("Unpaid") // 'Unpaid' | 'Paid' | 'Overdue'
+  loan              Loan     @relation(fields: [loanId], references: [id], onDelete: Cascade)
+
+  @@index([loanId])
+}
+
+model Transaction {
+  id            String   @id @default(cuid())
+  reference     String   @unique // e.g. "TXN-83921021"
+  memberId      String
+  memberName    String
+  type          String   // 'Deposit' | 'Withdrawal' | 'Loan Disbursement' | 'Repayment' | 'Dividend Credit'
+  amount        Float
+  paymentMethod String   // 'M-Pesa' | 'Bank Transfer' | 'Card' | 'SACCO Balance'
+  fee           Float    @default(0.0)
+  timestamp     DateTime @default(now())
+  status        String   @default("Completed") // 'Completed' | 'Pending' | 'Failed'
+  description   String
+
+  @@index([reference])
+  @@index([memberId])
+}
+
+model AuditLog {
+  id               String   @id @default(cuid())
+  timestamp        DateTime @default(now())
+  action           String
+  performedByEmail String
+  performedByRole  String
+  details          String
+  hash             String
+  prevHash         String
+  isIntegrityOk    Boolean  @default(true)
+
+  @@index([timestamp])
+}
+
+model SACCOSettings {
+  id                       String @id @default("singleton")
+  saccoName                String @default("Apex Co-operative SACCO")
+  baseInterestRateSavings  Float  @default(8.5)
+  baseInterestRateLoans    Float  @default(1.2)
+  maxLoanMultiplier        Float  @default(3.0)
+  minGuarantorsRequired    Int    @default(2)
+  mpesaShortcode           String @default("721900")
+  mpesaCallbackUrl         String @default("https://api.apexsacco.co.ke/v1/mpesa-callback")
+  registrationFee          Float  @default(1000.0)
+  penaltyOverdueRate       Float  @default(5.0)
+}
+
+model OTPSession {
+  id        String   @id @default(cuid())
+  userId    String
+  userEmail String
+  otpCode   String
+  expiresAt DateTime
+  isVerified Boolean @default(false)
+  attempts  Int      @default(0)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  revoked   Boolean  @default(false)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+}

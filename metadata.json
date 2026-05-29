@@ -1,0 +1,6 @@
+{
+  "name": "SACCO Management System",
+  "description": "An enterprise-grade, secure, and modern fintech-style SACCO (Savings and Credit Co-operative) Management System featuring multi-role authentication (Admin, Loan Officer, Accountant, Member), real-time financial tracking, savings portfolios, loan lifecycle controls, full repayment timeline auditing, and blockchain-style immutable transaction logs.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
