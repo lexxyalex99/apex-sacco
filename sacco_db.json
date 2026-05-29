@@ -8,7 +8,7 @@
       "status": "Active",
       "passwordHash": "$2b$10$IsQcWmTZWW4rvMD./MfPBuLfhVyJ0ut9HfikuXJ8r9yeus6cCgdoO",
       "avatarUrl": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
-      "lastLogin": "2026-05-29T11:08:11.028Z",
+      "lastLogin": "2026-05-29T11:26:01.606Z",
       "failedAttempts": 0,
       "lockoutUntil": null
     },
@@ -611,6 +611,17 @@
       "hash": "272972fa981217ad4147b54308d5567b12173fab4866533965c906ce66bb6789",
       "prevHash": "b00fda03a4b3fc40f16a1b6f687719a09160e02279a371acd885e632d893a8ca",
       "isIntegrityOk": true
+    },
+    {
+      "id": "aud-11-2035",
+      "timestamp": "2026-05-29T11:26:01.607Z",
+      "action": "User Session Sparked",
+      "performedByEmail": "admin@sacco.co.ke",
+      "performedByRole": "Admin",
+      "details": "Logged in successfully. Access token & 7d refresh token initialized. Verification OTP generated: 487736",
+      "hash": "381b8e373b6b2cc08333520db6c4c2d6ea4a5bee059f14820208c44f2142548e",
+      "prevHash": "272972fa981217ad4147b54308d5567b12173fab4866533965c906ce66bb6789",
+      "isIntegrityOk": true
     }
   ],
   "settings": {
@@ -626,11 +637,11 @@
   },
   "otpSessions": [
     {
-      "id": "otp-1780052891010-2560",
+      "id": "otp-1780053961585-5687",
       "userId": "usr-1",
       "userEmail": "admin@sacco.co.ke",
-      "otpCode": "490431",
-      "expiresAt": "2026-05-29T11:18:11.010Z",
+      "otpCode": "487736",
+      "expiresAt": "2026-05-29T11:36:01.585Z",
       "isVerified": false,
       "attempts": 0
     }
@@ -642,6 +653,14 @@
       "token": "0cf138c067d3e18da92d3b23ef58853dd1ddebeab663fb23f58cd6a6afdb18a8aff4c26577e72495",
       "expiresAt": "2026-06-05T11:08:11.022Z",
       "createdAt": "2026-05-29T11:08:11.022Z",
+      "revoked": false
+    },
+    {
+      "id": "rt-1780053961598-5924",
+      "userId": "usr-1",
+      "token": "c29263d6f75c6ce7052d8637cee38eed21fe9295b2fcc4d6a7dce3109f4f93ade4df36d8b913bd43",
+      "expiresAt": "2026-06-05T11:26:01.598Z",
+      "createdAt": "2026-05-29T11:26:01.598Z",
       "revoked": false
     }
   ]
