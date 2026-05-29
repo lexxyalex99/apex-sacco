@@ -735,7 +735,7 @@ router.get('/users', authenticateToken, (req: any, res: Response) => {
 // PUT /api/auth/users/:userId (Update or Rename specific user/personnel profiles)
 router.put('/users/:userId', authenticateToken, (req: any, res: Response) => {
   const { userId } = req.params;
-  const { fullName, email, status, role } = req.body;
+  const { fullName, email, status, role, avatarUrl } = req.body;
 
   // Security Gate: You must edit YOUR OWN account, or be an ADMIN to edit ANY account
   if (req.user.id !== userId && req.user.role !== 'Admin') {
@@ -763,6 +763,13 @@ router.put('/users/:userId', authenticateToken, (req: any, res: Response) => {
     }
   }
   if (email) user.email = email;
+  if (avatarUrl) {
+    user.avatarUrl = avatarUrl;
+    if (user.memberId) {
+      const member = db.members.find(m => m.memberId === user.memberId);
+      if (member) member.avatarUrl = avatarUrl;
+    }
+  }
   if (status && req.user.role === 'Admin') user.status = status;
   if (role && req.user.role === 'Admin') {
     // Prevent locking out the absolute last admin
@@ -790,7 +797,8 @@ router.put('/users/:userId', authenticateToken, (req: any, res: Response) => {
       role: user.role,
       fullName: user.fullName,
       memberId: user.memberId,
-      status: user.status
+      status: user.status,
+      avatarUrl: user.avatarUrl
     }
   });
 });

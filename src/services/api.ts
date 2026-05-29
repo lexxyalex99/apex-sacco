@@ -416,5 +416,36 @@ export const api = {
       throw new Error(data.error || 'Password recovery failed');
     }
     return res.json();
+  },
+
+  // KYC Verification Services
+  async getKycStatus() {
+    const res = await secureFetch(`${API_BASE}/auth/kyc-status`);
+    if (!res.ok) throw new Error('Failed to retrieve verification status');
+    return res.json();
+  },
+
+  async submitKyc(payload: { idUrl: string; selfieUrl: string; proofUrl: string; nationalId?: string }) {
+    const res = await secureFetch(`${API_BASE}/auth/kyc-submit`, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || 'Failed to lodge KYC verification');
+    }
+    return res.json();
+  },
+
+  async approveRejectKyc(payload: { memberId: string; action: 'Approve' | 'Reject'; comment?: string }) {
+    const res = await secureFetch(`${API_BASE}/auth/kyc-approve`, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || 'Failed to process compliance review');
+    }
+    return res.json();
   }
 };

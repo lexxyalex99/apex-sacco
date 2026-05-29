@@ -27,6 +27,11 @@ export interface Member {
   dividendsPaid: number;
   tier: 'Bronze' | 'Silver' | 'Gold' | 'Platinum';
   avatarUrl: string;
+  kycStatus?: 'Unverified' | 'Pending' | 'Approved' | 'Rejected';
+  kycIdUrl?: string;
+  kycSelfieUrl?: string;
+  kycProofUrl?: string;
+  kycComments?: string;
 }
 
 export interface RepaymentInstallment {

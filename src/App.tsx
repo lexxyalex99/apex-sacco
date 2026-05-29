@@ -542,7 +542,7 @@ export default function App() {
                   setTheme={setTheme}
                   currentUser={user}
                   onRefreshData={refreshAllData}
-                  onUpdateCurrentUserFullName={(name) => setUser(u => u ? { ...u, fullName: name } : null)}
+                  onUpdateCurrentUserProfile={(name, avatar) => setUser(u => u ? { ...u, fullName: name, avatarUrl: avatar || u.avatarUrl } : null)}
                 />
               )}
 
