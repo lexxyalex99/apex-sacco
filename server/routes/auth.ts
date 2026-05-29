@@ -269,16 +269,34 @@ router.post('/register-member', async (req: Request, res: Response) => {
     return;
   }
 
-  const { fullName, email, phone, nationalId, password } = validation.data;
+  const { fullName, email, phone, nationalId, password, kycIdUrl, kycProofUrl, kycSelfieUrl } = validation.data;
 
   const db = loadDatabase();
   const emailLower = email.toLowerCase();
   
-  const userExists = db.users.some(u => u.email.toLowerCase() === emailLower);
-  const memberExists = db.members.some(m => m.email.toLowerCase() === emailLower || m.nationalId === nationalId);
+  // 1. Format validation to verify ID looks real
+  const cleanedId = String(nationalId).trim();
+  const idRegex = /^\d{6,10}$/;
+  if (!idRegex.test(cleanedId)) {
+    res.status(400).json({ error: "Invalid National Identification format. A valid Government ID must be a numeric sequence of 6 to 10 digits." });
+    return;
+  }
+  if (cleanedId.startsWith("000") || cleanedId.split('').every(ch => ch === cleanedId[0])) {
+    res.status(400).json({ error: "Suspicious National ID. Government-issued IDs cannot contain repeating uniform digits or start with invalid prefixes." });
+    return;
+  }
 
-  if (userExists || memberExists) {
-    res.status(400).json({ error: "A member profile with similar credentials already is indexed." });
+  const userExists = db.users.some(u => u.email.toLowerCase() === emailLower);
+  const emailInUse = db.members.some(m => m.email.toLowerCase() === emailLower);
+  const idInUse = db.members.some(m => m.nationalId === cleanedId);
+
+  if (userExists || emailInUse) {
+    res.status(400).json({ error: "A member profile with this exact email is already registered." });
+    return;
+  }
+
+  if (idInUse) {
+    res.status(400).json({ error: `The National ID (${cleanedId}) is already linked to another co-operative member profile. Duplicate IDs are prohibited.` });
     return;
   }
 
@@ -288,6 +306,8 @@ router.post('/register-member', async (req: Request, res: Response) => {
 
   const salt = bcrypt.genSaltSync(10);
   const passwordHash = bcrypt.hashSync(password, salt);
+
+  const memberAvatar = kycSelfieUrl || `https://images.unsplash.com/photo-${1500000000000 + Math.floor(Math.random() * 500000)}?w=150&auto=format&fit=crop&q=80`;
 
   const newMember = {
     id: memberDbId,
@@ -304,7 +324,11 @@ router.post('/register-member', async (req: Request, res: Response) => {
     totalRepaid: 0,
     dividendsPaid: 0,
     tier: 'Bronze' as const,
-    avatarUrl: `https://images.unsplash.com/photo-${1500000000000 + Math.floor(Math.random() * 500000)}?w=150&auto=format&fit=crop&q=80`
+    avatarUrl: memberAvatar,
+    kycStatus: 'Pending' as const,
+    kycIdUrl: kycIdUrl || '',
+    kycProofUrl: kycProofUrl || '',
+    kycSelfieUrl: kycSelfieUrl || '',
   };
 
   const newUser = {
@@ -315,7 +339,7 @@ router.post('/register-member', async (req: Request, res: Response) => {
     memberId,
     status: "Active" as const,
     passwordHash,
-    avatarUrl: newMember.avatarUrl
+    avatarUrl: memberAvatar
   };
 
   db.members.push(newMember);
@@ -562,7 +586,27 @@ router.post('/kyc-submit', authenticateToken, (req: any, res: Response) => {
   mAny.kycSelfieUrl = selfieUrl;
   mAny.kycProofUrl = proofUrl;
   if (nationalId) {
-    member.nationalId = nationalId;
+    const cleanedId = String(nationalId).trim();
+    
+    // 1. Format validation to verify ID looks real
+    const idRegex = /^\d{6,10}$/;
+    if (!idRegex.test(cleanedId)) {
+      res.status(400).json({ error: "Invalid National Identification format. A valid Government ID must be a numeric sequence of 6 to 10 digits." });
+      return;
+    }
+    if (cleanedId.startsWith("000") || cleanedId.split('').every(ch => ch === cleanedId[0])) {
+      res.status(400).json({ error: "Suspicious National ID. Government-issued IDs cannot contain repeating uniform digits or start with invalid prefixes." });
+      return;
+    }
+
+    // 2. Restrict usage of one ID by many users
+    const duplicateIdMember = db.members.find(m => m.nationalId === cleanedId && m.memberId !== member.memberId);
+    if (duplicateIdMember) {
+      res.status(400).json({ error: `This National ID (${cleanedId}) is already linked to another active SACCO member profile (${duplicateIdMember.fullName}). Identity duplication is strictly prohibited.` });
+      return;
+    }
+
+    member.nationalId = cleanedId;
   }
   
   saveDatabase(db);

@@ -55,6 +55,7 @@ export default function SettingsView({
   const [mpesaCallbackUrl, setMpesaCallbackUrl] = useState(settings.mpesaCallbackUrl);
   const [regFee, setRegFee] = useState(settings.registrationFee.toString());
   const [penaltyRate, setPenaltyRate] = useState(settings.penaltyOverdueRate.toString());
+  const [strictKycLoanApproval, setStrictKycLoanApproval] = useState(settings.strictKycLoanApproval !== false);
 
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
@@ -110,6 +111,118 @@ export default function SettingsView({
   const [processingReview, setProcessingReview] = useState(false);
   const [reviewResponseSuccess, setReviewResponseSuccess] = useState('');
   const [reviewResponseError, setReviewResponseError] = useState('');
+
+  // Real-time camera and Local File upload states / methods
+  const [activeCameraTarget, setActiveCameraTarget] = useState<'avatar' | 'front' | 'back' | 'selfie' | null>(null);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [cameraError, setCameraError] = useState('');
+  const [cameraFacingMode, setCameraFacingMode] = useState<'user' | 'environment'>('user');
+  const [activeVideoElement, setActiveVideoElement] = useState<HTMLVideoElement | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [cameraStream]);
+
+  const startCamera = async (target: 'avatar' | 'front' | 'back' | 'selfie', facing: 'user' | 'environment' = 'user') => {
+    setActiveCameraTarget(target);
+    setCameraError('');
+    setCameraFacingMode(facing);
+
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: facing, width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false
+      });
+      setCameraStream(stream);
+    } catch (err: any) {
+      console.error("Camera access failed:", err);
+      setCameraError("Camera access was denied or is unavailable. Please ensure frame/browser permissions are granted.");
+    }
+  };
+
+  const stopCamera = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      setCameraStream(null);
+    }
+    setActiveCameraTarget(null);
+    setActiveVideoElement(null);
+  };
+
+  const capturePhoto = () => {
+    if (!activeVideoElement || !activeCameraTarget) return;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = activeVideoElement.videoWidth || 640;
+    canvas.height = activeVideoElement.videoHeight || 480;
+
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      if (cameraFacingMode === 'user') {
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+      }
+      ctx.drawImage(activeVideoElement, 0, 0, canvas.width, canvas.height);
+    }
+
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+    if (activeCameraTarget === 'avatar') {
+      setCustomAvatarUrl(dataUrl);
+      handleSaveAvatarUrl(dataUrl);
+    } else if (activeCameraTarget === 'front') {
+      setKycIdFrontUrl(dataUrl);
+    } else if (activeCameraTarget === 'back') {
+      setKycIdBackUrl(dataUrl);
+    } else if (activeCameraTarget === 'selfie') {
+      setKycSelfieUrl(dataUrl);
+    }
+    stopCamera();
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, target: 'avatar' | 'front' | 'back' | 'selfie') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64 = reader.result as string;
+      if (target === 'avatar') {
+        setCustomAvatarUrl(base64);
+        handleSaveAvatarUrl(base64);
+      } else if (target === 'front') {
+        setKycIdFrontUrl(base64);
+      } else if (target === 'back') {
+        setKycIdBackUrl(base64);
+      } else if (target === 'selfie') {
+        setKycSelfieUrl(base64);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleFileDrop = (e: React.DragEvent<HTMLDivElement>, target: 'front' | 'back' | 'selfie') => {
+    e.preventDefault();
+    const file = e.dataTransfer?.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64 = reader.result as string;
+      if (target === 'front') setKycIdFrontUrl(base64);
+      else if (target === 'back') setKycIdBackUrl(base64);
+      else if (target === 'selfie') setKycSelfieUrl(base64);
+    };
+    reader.readAsDataURL(file);
+  };
 
   useEffect(() => {
     fetchUsers();
@@ -322,7 +435,8 @@ export default function SettingsView({
         mpesaShortcode,
         mpesaCallbackUrl,
         registrationFee: parseFloat(regFee),
-        penaltyOverdueRate: parseFloat(penaltyRate)
+        penaltyOverdueRate: parseFloat(penaltyRate),
+        strictKycLoanApproval
       });
       setSuccess('SACCO administrative rules and policy settings updated on core ledger databases.');
     } catch (err: any) {
@@ -504,6 +618,27 @@ export default function SettingsView({
                 <option value="dark">Immersive Deep Dark Theme (Default)</option>
                 <option value="light">Crisp High-Contrast Light Theme</option>
               </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Section 5: Strict Mode Security Guardhouse */}
+        <div className="p-4 rounded-xl bg-amber-950/10 border border-amber-900/30 space-y-3">
+          <div className="flex items-start gap-3">
+            <input 
+              type="checkbox"
+              id="strictKycLoanApproval"
+              checked={strictKycLoanApproval}
+              onChange={(e) => setStrictKycLoanApproval(e.target.checked)}
+              className="mt-0.5 w-4 h-4 text-amber-500 bg-slate-900 border-slate-800 rounded focus:ring-amber-500 focus:ring-2 cursor-pointer"
+            />
+            <div className="space-y-1">
+              <label htmlFor="strictKycLoanApproval" className="font-extrabold text-amber-300 uppercase tracking-wider text-[11px] select-none cursor-pointer flex items-center gap-1.5">
+                🛡️ Activate Strict KYC Verification Guardhouse
+              </label>
+              <p className="text-[10px] text-slate-400 leading-relaxed">
+                When active, the credit engine strictly enforces that only fully KYC-verified members (with "Approved" status) or System Admins are authorized to borrow funds from the SACCO treasury. Unverified or pending members are automatically blocked at loan submission and approval gates.
+              </p>
             </div>
           </div>
         </div>
@@ -781,6 +916,33 @@ export default function SettingsView({
                   </button>
                 </div>
               </div>
+
+              {/* Direct local file selector or camera option for profile photos */}
+              <div className="pt-2 flex flex-col sm:flex-row gap-2 border-t border-slate-800/40">
+                <input 
+                  type="file" 
+                  id="user-profile-file-upload" 
+                  accept="image/*" 
+                  onChange={(e) => handleFileUpload(e, 'avatar')} 
+                  className="hidden" 
+                />
+                <button
+                  type="button"
+                  onClick={() => document.getElementById('user-profile-file-upload')?.click()}
+                  className="flex-1 py-1.5 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-350 hover:text-white rounded-lg font-bold text-[10px] uppercase font-mono tracking-wider flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                >
+                  <Upload className="w-3.5 h-3.5 text-blue-400" />
+                  Upload Profile Pic file
+                </button>
+                <button
+                  type="button"
+                  onClick={() => startCamera('avatar', 'user')}
+                  className="flex-1 py-1.5 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-350 hover:text-white rounded-lg font-bold text-[10px] uppercase font-mono tracking-wider flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                >
+                  <Camera className="w-3.5 h-3.5 text-emerald-400" />
+                  Capture Profile Photo
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -860,118 +1022,193 @@ export default function SettingsView({
                     />
                   </div>
 
-                  {/* 3 drag-and-drop document cards */}
+                  {/* 3 drag-and-drop / direct device document upload cards */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
                     
                     {/* Front ID upload card */}
                     <div 
                       onDragOver={(e) => { e.preventDefault(); setDraggingFront(true); }}
                       onDragLeave={() => setDraggingFront(false)}
-                      onDrop={(e) => { e.preventDefault(); setDraggingFront(false); handleSimulateFileUpload('front'); }}
-                      className={`p-4 rounded-xl border border-dashed transition-all flex flex-col items-center text-center justify-between gap-3 ${
+                      onDrop={(e) => { setDraggingFront(false); handleFileDrop(e, 'front'); }}
+                      className={`p-4 rounded-xl border border-dashed transition-all flex flex-col items-center text-center justify-between gap-3 min-h-[220px] ${
                         draggingFront ? 'border-blue-500 bg-blue-500/5' : 'border-slate-800 bg-slate-950/40 hover:border-slate-700'
                       }`}
                     >
                       <span className="font-extrabold uppercase tracking-wider text-[8px] text-slate-450 font-mono">1. ID Card Front Face</span>
                       {kycIdFrontUrl ? (
-                        <div className="relative w-full h-20 rounded-lg overflow-hidden border border-slate-800 group">
+                        <div className="relative w-full h-24 rounded-lg overflow-hidden border border-slate-800 group">
                           <img src={kycIdFrontUrl} alt="ID Front Preview" className="w-full h-full object-cover" />
                           <button 
                             type="button" 
                             onClick={() => setKycIdFrontUrl('')}
-                            className="absolute -top-1 -right-1 p-1 bg-red-600 rounded-full text-white cursor-pointer hover:bg-red-500 transition-colors"
+                            className="bg-red-600 rounded-full text-white cursor-pointer hover:bg-red-500 transition-colors p-1 absolute top-1 right-1 z-10"
                           >
-                            <X className="w-2.5 h-2.5" />
+                            <X className="w-3 h-3" />
                           </button>
                         </div>
                       ) : (
                         <div className="py-2 flex flex-col items-center gap-1.5">
                           <FileText className="w-6 h-6 text-slate-500" />
-                          <p className="text-[9px] text-slate-450 leading-relaxed">Drop ID front file here, or select option below</p>
+                          <p className="text-[9px] text-slate-450 leading-relaxed">Drag & drop ID front, or select options below</p>
                         </div>
                       )}
-                      <button
-                        type="button"
-                        onClick={() => handleSimulateFileUpload('front')}
-                        className="py-1 px-3 bg-slate-900 border border-slate-800 hover:text-white rounded-lg text-[9px] font-bold font-mono uppercase tracking-wider cursor-pointer"
-                      >
-                        <Upload className="w-3 h-3 text-blue-400 inline-block mr-1" />
-                        Simulate Upload
-                      </button>
+                      
+                      <div className="flex flex-col gap-1.5 w-full">
+                        <input 
+                          type="file" 
+                          id="id-front-file-picker" 
+                          accept="image/*" 
+                          onChange={(e) => handleFileUpload(e, 'front')} 
+                          className="hidden" 
+                        />
+                        <button
+                          type="button"
+                          onClick={() => document.getElementById('id-front-file-picker')?.click()}
+                          className="w-full py-1 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-200 hover:text-white rounded-lg text-[9px] font-bold font-mono uppercase tracking-wider flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                        >
+                          <Upload className="w-3 h-3 text-blue-400" />
+                          Upload from Device
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => startCamera('front', 'environment')}
+                          className="w-full py-1 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-200 hover:text-white rounded-lg text-[9px] font-bold font-mono uppercase tracking-wider flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                        >
+                          <Camera className="w-3 h-3 text-emerald-400" />
+                          Open Camera Real-time
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSimulateFileUpload('front')}
+                          className="w-full py-0.5 text-[8px] text-slate-500 hover:text-slate-400 font-mono text-center flex items-center justify-center gap-0.5 border border-transparent hover:border-slate-800/40 rounded transition-colors"
+                        >
+                          Simulate Sample ID
+                        </button>
+                      </div>
                     </div>
 
                     {/* Back ID upload card */}
                     <div 
                       onDragOver={(e) => { e.preventDefault(); setDraggingBack(true); }}
                       onDragLeave={() => setDraggingBack(false)}
-                      onDrop={(e) => { e.preventDefault(); setDraggingBack(false); handleSimulateFileUpload('back'); }}
-                      className={`p-4 rounded-xl border border-dashed transition-all flex flex-col items-center text-center justify-between gap-3 ${
-                        draggingBack ? 'border-blue-500 bg-blue-500/5' : 'border-slate-800 bg-slate-950/40 hover:border-slate-700'
+                      onDrop={(e) => { setDraggingBack(false); handleFileDrop(e, 'back'); }}
+                      className={`p-4 rounded-xl border border-dashed transition-all flex flex-col items-center text-center justify-between gap-3 min-h-[220px] ${
+                        draggingBack ? 'border-sky-500 bg-sky-500/5' : 'border-slate-800 bg-slate-950/40 hover:border-slate-700'
                       }`}
                     >
                       <span className="font-extrabold uppercase tracking-wider text-[8px] text-slate-450 font-mono">2. ID Card Back Face</span>
                       {kycIdBackUrl ? (
-                        <div className="relative w-full h-20 rounded-lg overflow-hidden border border-slate-800 group">
+                        <div className="relative w-full h-24 rounded-lg overflow-hidden border border-slate-800 group">
                           <img src={kycIdBackUrl} alt="ID Back Preview" className="w-full h-full object-cover" />
                           <button 
                             type="button" 
                             onClick={() => setKycIdBackUrl('')}
-                            className="absolute -top-1 -right-1 p-1 bg-red-600 rounded-full text-white cursor-pointer hover:bg-red-500 transition-colors"
+                            className="bg-red-600 rounded-full text-white cursor-pointer hover:bg-red-500 transition-colors p-1 absolute top-1 right-1 z-10"
                           >
-                            <X className="w-2.5 h-2.5" />
+                            <X className="w-3 h-3" />
                           </button>
                         </div>
                       ) : (
                         <div className="py-2 flex flex-col items-center gap-1.5">
                           <FileText className="w-6 h-6 text-slate-500" />
-                          <p className="text-[9px] text-slate-450 leading-relaxed">Drop ID back file here, or select option below</p>
+                          <p className="text-[9px] text-slate-450 leading-relaxed">Drag & drop ID back, or select options below</p>
                         </div>
                       )}
-                      <button
-                        type="button"
-                        onClick={() => handleSimulateFileUpload('back')}
-                        className="py-1 px-3 bg-slate-900 border border-slate-800 hover:text-white rounded-lg text-[9px] font-bold font-mono uppercase tracking-wider cursor-pointer"
-                      >
-                        <Upload className="w-3 h-3 text-emerald-400 inline-block mr-1" />
-                        Simulate Upload
-                      </button>
+                      
+                      <div className="flex flex-col gap-1.5 w-full">
+                        <input 
+                          type="file" 
+                          id="id-back-file-picker" 
+                          accept="image/*" 
+                          onChange={(e) => handleFileUpload(e, 'back')} 
+                          className="hidden" 
+                        />
+                        <button
+                          type="button"
+                          onClick={() => document.getElementById('id-back-file-picker')?.click()}
+                          className="w-full py-1 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-200 hover:text-white rounded-lg text-[9px] font-bold font-mono uppercase tracking-wider flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                        >
+                          <Upload className="w-3 h-3 text-sky-450" />
+                          Upload from Device
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => startCamera('back', 'environment')}
+                          className="w-full py-1 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-200 hover:text-white rounded-lg text-[9px] font-bold font-mono uppercase tracking-wider flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                        >
+                          <Camera className="w-3 h-3 text-teal-450" />
+                          Open Camera Real-time
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSimulateFileUpload('back')}
+                          className="w-full py-0.5 text-[8px] text-slate-500 hover:text-slate-400 font-mono text-center flex items-center justify-center gap-0.5 border border-transparent hover:border-slate-800/40 rounded transition-colors"
+                        >
+                          Simulate Sample ID
+                        </button>
+                      </div>
                     </div>
 
                     {/* Selfie Live Capture card */}
                     <div 
                       onDragOver={(e) => { e.preventDefault(); setDraggingSelfie(true); }}
                       onDragLeave={() => setDraggingSelfie(false)}
-                      onDrop={(e) => { e.preventDefault(); setDraggingSelfie(false); handleSimulateFileUpload('selfie'); }}
-                      className={`p-4 rounded-xl border border-dashed transition-all flex flex-col items-center text-center justify-between gap-3 ${
-                        draggingSelfie ? 'border-blue-500 bg-blue-500/5' : 'border-slate-800 bg-slate-950/40 hover:border-slate-700'
+                      onDrop={(e) => { setDraggingSelfie(false); handleFileDrop(e, 'selfie'); }}
+                      className={`p-4 rounded-xl border border-dashed transition-all flex flex-col items-center text-center justify-between gap-3 min-h-[220px] ${
+                        draggingSelfie ? 'border-rose-500 bg-rose-500/5' : 'border-slate-800 bg-slate-950/40 hover:border-slate-700'
                       }`}
                     >
                       <span className="font-extrabold uppercase tracking-wider text-[8px] text-slate-450 font-mono">3. Live Selfie Portrait</span>
                       {kycSelfieUrl ? (
-                        <div className="relative w-full h-20 rounded-lg overflow-hidden border border-slate-800 group">
+                        <div className="relative w-full h-24 rounded-lg overflow-hidden border border-slate-800 group">
                           <img src={kycSelfieUrl} alt="Selfie Portrait Preview" className="w-full h-full object-cover" />
                           <button 
                             type="button" 
                             onClick={() => setKycSelfieUrl('')}
-                            className="absolute -top-1 -right-1 p-1 bg-red-600 rounded-full text-white cursor-pointer hover:bg-red-500 transition-colors"
+                            className="bg-red-600 rounded-full text-white cursor-pointer hover:bg-red-500 transition-colors p-1 absolute top-1 right-1 z-10"
                           >
-                            <X className="w-2.5 h-2.5" />
+                            <X className="w-3 h-3" />
                           </button>
                         </div>
                       ) : (
                         <div className="py-2 flex flex-col items-center gap-1.5">
                           <Eye className="w-6 h-6 text-slate-500" />
-                          <p className="text-[9px] text-slate-450 leading-relaxed">Drop camera portrait selfie photo frame here</p>
+                          <p className="text-[9px] text-slate-450 leading-relaxed">Drag & drop facial selfie, or select options below</p>
                         </div>
                       )}
-                      <button
-                        type="button"
-                        onClick={() => handleSimulateFileUpload('selfie')}
-                        className="py-1 px-3 bg-slate-900 border border-slate-800 hover:text-white rounded-lg text-[9px] font-bold font-mono uppercase tracking-wider cursor-pointer"
-                      >
-                        <Camera className="w-3 h-3 text-rose-400 inline-block mr-1" />
-                        Capture Selfie
-                      </button>
+                      
+                      <div className="flex flex-col gap-1.5 w-full">
+                        <input 
+                          type="file" 
+                          id="selfie-portrait-file-picker" 
+                          accept="image/*" 
+                          onChange={(e) => handleFileUpload(e, 'selfie')} 
+                          className="hidden" 
+                        />
+                        <button
+                          type="button"
+                          onClick={() => document.getElementById('selfie-portrait-file-picker')?.click()}
+                          className="w-full py-1 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-200 hover:text-white rounded-lg text-[9px] font-bold font-mono uppercase tracking-wider flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                        >
+                          <Upload className="w-3 h-3 text-pink-400" />
+                          Upload from Device
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => startCamera('selfie', 'user')}
+                          className="w-full py-1 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-200 hover:text-white rounded-lg text-[9px] font-bold font-mono uppercase tracking-wider flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                        >
+                          <Camera className="w-3 h-3 text-rose-450" />
+                          Open Selfie Camera
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSimulateFileUpload('selfie')}
+                          className="w-full py-0.5 text-[8px] text-slate-500 hover:text-slate-400 font-mono text-center flex items-center justify-center gap-0.5 border border-transparent hover:border-slate-800/40 rounded transition-colors"
+                        >
+                          Simulate Sample Face
+                        </button>
+                      </div>
                     </div>
 
                   </div>
@@ -1196,6 +1433,118 @@ export default function SettingsView({
 
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* --------------------------------------------------------- */}
+      {/* REAL-TIME DEVICE CAMERA CAPTURE OVERLAY MODAL */}
+      {/* --------------------------------------------------------- */}
+      {activeCameraTarget && (
+        <div className="fixed inset-0 bg-[#070b13]/95 backdrop-blur-md flex flex-col items-center justify-center p-4 z-50 animate-fadeIn">
+          <div className="w-full max-w-md bg-[#111726] border border-slate-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col">
+            {/* Modal Header */}
+            <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/60">
+              <div className="flex items-center gap-2">
+                <Camera className="w-4 h-4 text-emerald-400" />
+                <span className="font-extrabold text-white text-[10px] uppercase tracking-wider font-mono">
+                  {activeCameraTarget === 'avatar' ? 'Capture Main Profile Picture' :
+                   activeCameraTarget === 'front' ? 'Identity Verification Card Front' :
+                   activeCameraTarget === 'back' ? 'Identity Verification Card Back' :
+                   'Biometric Face Selfie Verification'}
+                </span>
+              </div>
+              <button 
+                type="button"
+                onClick={stopCamera}
+                className="p-1 rounded-lg bg-slate-800 hover:bg-slate-750 text-slate-400 hover:text-white cursor-pointer transition-colors"
+                title="Cancel and close camera"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Camera Viewport */}
+            <div className="aspect-video bg-black relative flex items-center justify-center border-b border-slate-800 overflow-hidden">
+              {cameraError ? (
+                <div className="p-6 text-center space-y-3">
+                  <ShieldAlert className="w-10 h-10 text-rose-500 mx-auto" />
+                  <p className="text-xs text-rose-300 font-medium font-mono max-w-sm whitespace-pre-wrap">{cameraError}</p>
+                  <p className="text-[10px] text-slate-400 max-w-xs mx-auto">
+                    Please click standard camera prompts in your browser address bar to allow browser frame permissions. 
+                    Alternatively, click Cancel to select any stored picture file directly from your local drive storage.
+                  </p>
+                </div>
+              ) : !cameraStream ? (
+                <div className="flex flex-col items-center gap-3">
+                  <Loader2 className="w-7 h-7 text-emerald-400 animate-spin" />
+                  <p className="text-[10px] text-slate-400 font-mono tracking-widest uppercase">Requesting Hardware Stream...</p>
+                </div>
+              ) : (
+                <>
+                  <video
+                    ref={(el) => {
+                      if (el) {
+                        try {
+                          el.srcObject = cameraStream;
+                          el.play().catch(() => {});
+                          setActiveVideoElement(el);
+                        } catch (e) {
+                          console.warn("Setting element source stream skipped:", e);
+                        }
+                      }
+                    }}
+                    playsInline
+                    muted
+                    autoPlay
+                    className={`w-full h-full object-cover ${cameraFacingMode === 'user' ? 'scale-x-[-1]' : ''}`}
+                  />
+                  {/* Guideline Grids overlay HUD */}
+                  <div className="absolute inset-0 pointer-events-none flex items-center justify-center p-4">
+                    {activeCameraTarget === 'selfie' || activeCameraTarget === 'avatar' ? (
+                      <div className="w-36 h-48 sm:w-44 sm:h-56 rounded-[50%] border-2 border-dashed border-emerald-400/80 shadow-[0_0_0_9999px_rgba(7,11,19,0.75)] flex flex-col items-center justify-center gap-1.5">
+                        <span className="text-[8px] font-mono font-black uppercase tracking-widest text-emerald-400 bg-[#0b0f19] px-2 py-0.5 rounded border border-emerald-500/10">Fit Face Oval</span>
+                      </div>
+                    ) : (
+                      <div className="w-64 h-36 sm:w-72 sm:h-44 rounded-xl border-2 border-dashed border-blue-400/80 shadow-[0_0_0_9999px_rgba(7,11,19,0.75)] flex flex-col items-center justify-center gap-1.5">
+                        <span className="text-[8px] font-mono font-black uppercase tracking-widest text-blue-400 bg-[#0b0f19] px-2 py-0.5 rounded border border-blue-500/10 font-bold">Align ID Hologram</span>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Modal Controls */}
+            <div className="p-4 bg-slate-900/60 flex flex-col sm:flex-row gap-3 items-center justify-between">
+              <button
+                type="button"
+                onClick={() => startCamera(activeCameraTarget, cameraFacingMode === 'user' ? 'environment' : 'user')}
+                disabled={!cameraStream}
+                className="w-full sm:w-auto px-3 py-1.5 bg-slate-800 hover:bg-slate-750 disabled:opacity-40 text-slate-300 rounded-lg text-[9px] font-bold font-mono tracking-wider cursor-pointer uppercase flex items-center justify-center gap-1 transition-colors"
+              >
+                🔄 Toggle Camera lens
+              </button>
+
+              <div className="flex gap-2 w-full sm:w-auto justify-end">
+                <button
+                  type="button"
+                  onClick={stopCamera}
+                  className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-750 text-slate-400 hover:text-white rounded-lg text-[9px] font-bold cursor-pointer transition-colors uppercase tracking-wider font-mono border border-slate-750"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={capturePhoto}
+                  disabled={!cameraStream}
+                  className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg text-[9px] font-black uppercase shadow-lg hover:shadow-emerald-950/20 active:scale-95 transition-all text-center flex items-center justify-center gap-1.5 font-mono tracking-wider cursor-pointer"
+                >
+                  <Camera className="w-3.5 h-3.5" />
+                  Capture Photo
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

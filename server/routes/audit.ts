@@ -5,7 +5,7 @@ import { authenticateToken, requireRoles } from '../middlewares/security';
 const router = Router();
 
 // GET /api/audit
-router.get('/', authenticateToken, requireRoles(['Admin', 'Loan Officer', 'Accountant']), (req: any, res: Response) => {
+router.get('/', authenticateToken, requireRoles(['Admin']), (req: any, res: Response) => {
   const db = loadDatabase();
   res.json(db.auditLogs);
 });

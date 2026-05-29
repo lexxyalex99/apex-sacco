@@ -73,6 +73,16 @@ router.post('/apply', authenticateToken, loanSubmissionLimiter, (req: any, res: 
     return;
   }
 
+  // Strict KYC Verification mode check (Admins can bypass)
+  const isStrictKycActive = db.settings.strictKycLoanApproval !== false;
+  const kycStatus = (member as any).kycStatus || 'Unverified';
+  if (isStrictKycActive && currentUser.role !== 'Admin' && kycStatus !== 'Approved') {
+    res.status(403).json({
+      error: `Access Denied. Strict security mode is active. Only fully verified co-operative members with "Approved" KYC status are authorized to borrow funds from the SACCO treasury. Your current KYC state is "${kycStatus}". Please submit/update your identity documents under Settings first.`
+    });
+    return;
+  }
+
   // Credit Scoring & Predictive Analytics (Branch & Tala Style)
   const scoreResult = CreditScoringEngine.evaluateMember(currentUser.memberId);
 
@@ -184,6 +194,16 @@ router.post('/:loanId/action', authenticateToken, requireRoles(['Admin', 'Loan O
   const member = db.members.find(m => m.memberId === loan.memberId);
   if (!member) {
     res.status(404).json({ error: "Loan applicant member profile is missing." });
+    return;
+  }
+
+  // Strict KYC Verification mode check on loan approval
+  const isStrictKycActive = db.settings.strictKycLoanApproval !== false;
+  const kycStatus = (member as any).kycStatus || 'Unverified';
+  if (action === 'Approve' && isStrictKycActive && kycStatus !== 'Approved') {
+    res.status(403).json({
+      error: `Access Denied. Strict security mode is active. This client profile is currently Unverified/Pending/Rejected (KYC status is "${kycStatus}"). Loan disbursements can only be approved for fully verified co-operative members.`
+    });
     return;
   }
 

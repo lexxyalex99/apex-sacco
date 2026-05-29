@@ -99,6 +99,7 @@ export interface SACCOSettings {
   mpesaCallbackUrl: string;
   registrationFee: number;
   penaltyOverdueRate: number; // % fee added to late installments
+  strictKycLoanApproval?: boolean; // When active, restricts loans to Admins or Verified members only
 }
 
 export interface DashboardStats {

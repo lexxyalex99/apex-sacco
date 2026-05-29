@@ -24,6 +24,24 @@ export default function LoginView({ onLoginSuccess }: LoginProps) {
   const [regPhone, setRegPhone] = useState('');
   const [regNatId, setRegNatId] = useState('');
   const [regPassword, setRegPassword] = useState('');
+  const [kycIdPhoto, setKycIdPhoto] = useState('');     // Front ID Base64
+  const [kycBackIdPhoto, setKycBackIdPhoto] = useState(''); // Back ID Base64
+  const [kycSelfiePhoto, setKycSelfiePhoto] = useState(''); // User selfie photo Base64
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, setPhoto: (base64: string) => void) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        setError("File size exceeds 2MB limit.");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhoto(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   // Password Recovery States
   const [forgotPasswordMode, setForgotPasswordMode] = useState(false);
@@ -100,6 +118,11 @@ export default function LoginView({ onLoginSuccess }: LoginProps) {
       return;
     }
 
+    if (!kycIdPhoto || !kycBackIdPhoto || !kycSelfiePhoto) {
+      setError('Identity Validation Required: Please upload front of ID, back of ID, and your profile photo/selfie.');
+      return;
+    }
+
     setError('');
     setLoading(true);
 
@@ -109,7 +132,10 @@ export default function LoginView({ onLoginSuccess }: LoginProps) {
         email: regEmail,
         phone: regPhone,
         nationalId: regNatId,
-        password: regPassword
+        password: regPassword,
+        kycIdUrl: kycIdPhoto,
+        kycProofUrl: kycBackIdPhoto,
+        kycSelfieUrl: kycSelfiePhoto
       });
 
       // Save to localStorage backups to survive ephemeral serverless scale-down wipes
@@ -133,7 +159,11 @@ export default function LoginView({ onLoginSuccess }: LoginProps) {
           totalRepaid: 0,
           dividendsPaid: 0,
           tier: 'Bronze',
-          avatarUrl: res.user.avatarUrl || `https://images.unsplash.com/photo-${1500000000000 + Math.floor(Math.random() * 500000)}?w=150&auto=format&fit=crop&q=80`
+          kycStatus: 'Pending',
+          kycIdUrl: kycIdPhoto,
+          kycProofUrl: kycBackIdPhoto,
+          kycSelfieUrl: kycSelfiePhoto,
+          avatarUrl: res.user.avatarUrl || kycSelfiePhoto || `https://images.unsplash.com/photo-${1500000000000 + Math.floor(Math.random() * 500000)}?w=150&auto=format&fit=crop&q=80`
         });
         
         backupUsers.push({
@@ -143,7 +173,7 @@ export default function LoginView({ onLoginSuccess }: LoginProps) {
           fullName: regName,
           memberId,
           status: "Active",
-          avatarUrl: res.user.avatarUrl
+          avatarUrl: res.user.avatarUrl || kycSelfiePhoto
         });
         
         const backupCreds = JSON.parse(localStorage.getItem('sacco_backup_creds') || '{}');
@@ -598,6 +628,98 @@ export default function LoginView({ onLoginSuccess }: LoginProps) {
                     onChange={(e) => setRegPassword(e.target.value)}
                     className="w-full px-3 py-1.5 bg-slate-900/60 border border-slate-800 focus:border-blue-500 focus:bg-slate-900 rounded-lg text-xs outline-hidden text-[#ffffff]"
                   />
+                </div>
+
+                {/* Upload Section for Photos */}
+                <div className="space-y-2 pt-1 border-t border-slate-800/50 mt-1">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Mandatory Verification Photos & ID Documents</span>
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        setKycIdPhoto("https://images.unsplash.com/photo-1554774853-aae0a22c8aa4?w=400&q=80");
+                        setKycBackIdPhoto("https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80");
+                        setKycSelfiePhoto("https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80");
+                      }} 
+                      className="text-[9px] text-blue-400 hover:underline hover:text-blue-300 font-bold tracking-tight cursor-pointer"
+                    >
+                      ⚡ Load Demo Identity Photos
+                    </button>
+                  </div>
+                  
+                  <div className="grid grid-cols-3 gap-2">
+                    {/* Front ID */}
+                    <div className="flex flex-col space-y-1">
+                      <span className="text-[9px] font-semibold text-slate-400 text-center uppercase tracking-wider block leading-none">ID Front</span>
+                      <div className="relative border border-dashed border-slate-800 hover:border-blue-500 rounded-lg p-1.5 bg-slate-950/40 text-center transition-all cursor-pointer h-16 flex items-center justify-center">
+                        {kycIdPhoto ? (
+                          <div className="relative w-full h-full">
+                            <img src={kycIdPhoto} className="h-full w-full object-cover rounded" alt="Front ID" />
+                            <button type="button" onClick={() => setKycIdPhoto('')} className="absolute -top-1 -right-1 bg-rose-600 text-white rounded-full w-3.5 h-3.5 text-[8px] flex items-center justify-center font-bold">✕</button>
+                          </div>
+                        ) : (
+                          <div className="py-1">
+                            <span className="text-[8px] text-slate-400 block font-medium">Front ID File</span>
+                            <span className="text-[7px] text-slate-500 block">Select</span>
+                          </div>
+                        )}
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          onChange={(e) => handleFileChange(e, setKycIdPhoto)} 
+                          className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" 
+                        />
+                      </div>
+                    </div>
+
+                    {/* Back ID */}
+                    <div className="flex flex-col space-y-1">
+                      <span className="text-[9px] font-semibold text-slate-400 text-center uppercase tracking-wider block leading-none">ID Back</span>
+                      <div className="relative border border-dashed border-slate-800 hover:border-blue-500 rounded-lg p-1.5 bg-slate-950/40 text-center transition-all cursor-pointer h-16 flex items-center justify-center">
+                        {kycBackIdPhoto ? (
+                          <div className="relative w-full h-full">
+                            <img src={kycBackIdPhoto} className="h-full w-full object-cover rounded" alt="Back ID" />
+                            <button type="button" onClick={() => setKycBackIdPhoto('')} className="absolute -top-1 -right-1 bg-rose-600 text-white rounded-full w-3.5 h-3.5 text-[8px] flex items-center justify-center font-bold">✕</button>
+                          </div>
+                        ) : (
+                          <div className="py-1">
+                            <span className="text-[8px] text-slate-400 block font-medium">Back ID File</span>
+                            <span className="text-[7px] text-slate-500 block">Select</span>
+                          </div>
+                        )}
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          onChange={(e) => handleFileChange(e, setKycBackIdPhoto)} 
+                          className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" 
+                        />
+                      </div>
+                    </div>
+
+                    {/* Profile Photo */}
+                    <div className="flex flex-col space-y-1">
+                      <span className="text-[9px] font-semibold text-slate-400 text-center uppercase tracking-wider block leading-none">His Photo</span>
+                      <div className="relative border border-dashed border-slate-800 hover:border-blue-500 rounded-lg p-1.5 bg-slate-950/40 text-center transition-all cursor-pointer h-16 flex items-center justify-center">
+                        {kycSelfiePhoto ? (
+                          <div className="relative w-full h-full">
+                            <img src={kycSelfiePhoto} className="h-full w-full object-cover rounded" alt="Selfie" />
+                            <button type="button" onClick={() => setKycSelfiePhoto('')} className="absolute -top-1 -right-1 bg-rose-600 text-white rounded-full w-3.5 h-3.5 text-[8px] flex items-center justify-center font-bold">✕</button>
+                          </div>
+                        ) : (
+                          <div className="py-1">
+                            <span className="text-[8px] text-slate-400 block font-medium">Selfie Photo</span>
+                            <span className="text-[7px] text-slate-500 block">Select</span>
+                          </div>
+                        )}
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          onChange={(e) => handleFileChange(e, setKycSelfiePhoto)} 
+                          className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" 
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <button 

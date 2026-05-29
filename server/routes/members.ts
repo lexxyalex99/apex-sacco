@@ -26,7 +26,7 @@ router.get('/:memberId', authenticateToken, (req: any, res: Response) => {
 
 // POST /api/members Onboard fresh member administratively
 router.post('/', authenticateToken, requireRoles(['Admin', 'Loan Officer', 'Accountant']), (req: any, res: Response) => {
-  const { fullName, email, phone, nationalId, initialSavings, tier } = req.body;
+  const { fullName, email, phone, nationalId, initialSavings, tier, kycIdUrl, kycProofUrl, kycSelfieUrl } = req.body;
   
   if (!fullName || !email || !phone || !nationalId) {
     res.status(400).json({ error: "Missing required profile parameters. Required: fullName, email, phone, nationalId" });
@@ -36,9 +36,28 @@ router.post('/', authenticateToken, requireRoles(['Admin', 'Loan Officer', 'Acco
   const db = loadDatabase();
   const emailLower = email.toLowerCase();
   
-  const exists = db.members.some(m => m.email.toLowerCase() === emailLower || m.nationalId === nationalId);
-  if (exists) {
-    res.status(400).json({ error: "A member with this exact email or National ID already exists in the system database." });
+  // 1. Format validation to verify ID looks real
+  const cleanedId = String(nationalId).trim();
+  const idRegex = /^\d{6,10}$/;
+  if (!idRegex.test(cleanedId)) {
+    res.status(400).json({ error: "Invalid National Identification format. A valid Government ID must be a numeric sequence of 6 to 10 digits." });
+    return;
+  }
+  if (cleanedId.startsWith("000") || cleanedId.split('').every(ch => ch === cleanedId[0])) {
+    res.status(400).json({ error: "Suspicious National ID. Government-issued IDs cannot contain repeating uniform digits or start with invalid prefixes." });
+    return;
+  }
+
+  const emailInUse = db.members.some(m => m.email.toLowerCase() === emailLower);
+  const idInUse = db.members.some(m => m.nationalId === cleanedId);
+
+  if (emailInUse) {
+    res.status(400).json({ error: "A member with this exact email already exists in the system database." });
+    return;
+  }
+
+  if (idInUse) {
+    res.status(400).json({ error: `The National ID (${cleanedId}) is already linked to another co-operative member profile. Duplicate IDs are prohibited.` });
     return;
   }
 
@@ -48,6 +67,8 @@ router.post('/', authenticateToken, requireRoles(['Admin', 'Loan Officer', 'Acco
   
   const salt = bcrypt.genSaltSync(10);
   const passwordHash = bcrypt.hashSync("password123", salt); // standard first default credential
+
+  const memberAvatar = kycSelfieUrl || `https://images.unsplash.com/photo-${1500000000000 + Math.floor(Math.random() * 500000)}?w=150&auto=format&fit=crop&q=80`;
 
   const newMember: Member = {
     id: memberDbId,
@@ -64,7 +85,11 @@ router.post('/', authenticateToken, requireRoles(['Admin', 'Loan Officer', 'Acco
     totalRepaid: 0,
     dividendsPaid: 0,
     tier: tier || 'Bronze',
-    avatarUrl: `https://images.unsplash.com/photo-${1500000000000 + Math.floor(Math.random() * 500000)}?w=150&auto=format&fit=crop&q=80`
+    avatarUrl: memberAvatar,
+    kycStatus: (kycIdUrl || kycProofUrl || kycSelfieUrl) ? 'Pending' : 'Unverified',
+    kycIdUrl: kycIdUrl || '',
+    kycProofUrl: kycProofUrl || '',
+    kycSelfieUrl: kycSelfieUrl || '',
   };
 
   db.members.push(newMember);
@@ -76,7 +101,7 @@ router.post('/', authenticateToken, requireRoles(['Admin', 'Loan Officer', 'Acco
     memberId,
     status: "Active",
     passwordHash,
-    avatarUrl: newMember.avatarUrl
+    avatarUrl: memberAvatar
   });
 
   if (parseFloat(initialSavings) > 0) {
@@ -119,7 +144,27 @@ router.put('/:memberId', authenticateToken, requireRoles(['Admin', 'Loan Officer
 
   if (fullName) member.fullName = fullName;
   if (phone) member.phone = phone;
-  if (nationalId) member.nationalId = nationalId;
+  if (nationalId) {
+    const cleanedId = String(nationalId).trim();
+    // 1. Format validation to verify ID looks real
+    const idRegex = /^\d{6,10}$/;
+    if (!idRegex.test(cleanedId)) {
+      res.status(400).json({ error: "Invalid National Identification format. A valid Government ID must be a numeric sequence of 6 to 10 digits." });
+      return;
+    }
+    if (cleanedId.startsWith("000") || cleanedId.split('').every(ch => ch === cleanedId[0])) {
+      res.status(400).json({ error: "Suspicious National ID. Government-issued IDs cannot contain repeating uniform digits or start with invalid prefixes." });
+      return;
+    }
+
+    // 2. Restrict usage of one ID by many users
+    const duplicateIdMember = db.members.find(m => m.nationalId === cleanedId && m.memberId !== memberId);
+    if (duplicateIdMember) {
+      res.status(400).json({ error: `This National ID (${cleanedId}) is already linked to another active SACCO member profile (${duplicateIdMember.fullName}). Identity duplication is strictly prohibited.` });
+      return;
+    }
+    member.nationalId = cleanedId;
+  }
   if (tier) member.tier = tier;
   if (status) {
     member.status = status;

@@ -45,6 +45,25 @@ export default function MembersView({ members, onAddMember, onUpdateMember, role
   const [formError, setFormError] = useState('');
   const [savingForm, setSavingForm] = useState(false);
 
+  const [kycIdUrl, setKycIdUrl] = useState('');
+  const [kycProofUrl, setKycProofUrl] = useState('');
+  const [kycSelfieUrl, setKycSelfieUrl] = useState('');
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, setPhoto: (base64: string) => void) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        setFormError("File size exceeds 2MB limit.");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhoto(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   // Filter members list based on queries
   const filteredMembers = members.filter(m => {
     // If the currently registered user is a standard Member, restrict view if policy demands, 
@@ -64,6 +83,12 @@ export default function MembersView({ members, onAddMember, onUpdateMember, role
       setFormError('Please fill out all required attributes.');
       return;
     }
+    
+    if (!kycIdUrl || !kycProofUrl || !kycSelfieUrl) {
+      setFormError('Portfolio Identity Safeguard: Front ID, Back ID, and selfie pictures are required for onboarding.');
+      return;
+    }
+
     setFormError('');
     setSavingForm(true);
 
@@ -74,7 +99,10 @@ export default function MembersView({ members, onAddMember, onUpdateMember, role
         phone,
         nationalId: natId,
         initialSavings,
-        tier
+        tier,
+        kycIdUrl,
+        kycProofUrl,
+        kycSelfieUrl
       });
       setShowAddModal(false);
       // Reset State
@@ -83,6 +111,9 @@ export default function MembersView({ members, onAddMember, onUpdateMember, role
       setPhone('');
       setNatId('');
       setInitialSavings('2000');
+      setKycIdUrl('');
+      setKycProofUrl('');
+      setKycSelfieUrl('');
     } catch (err: any) {
       setFormError(err.message || 'Onboarding failed.');
     } finally {
@@ -114,7 +145,8 @@ export default function MembersView({ members, onAddMember, onUpdateMember, role
     return new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES', maximumFractionDigits: 0 }).format(value);
   };
 
-  const isAccessDeniedForMutate = role === 'Member';
+  const canOnboard = role !== 'Member';
+  const canOversee = role === 'Admin';
 
   return (
     <div className="space-y-6 relative">
@@ -160,7 +192,7 @@ export default function MembersView({ members, onAddMember, onUpdateMember, role
             <option value="Suspended">Suspended</option>
           </select>
 
-          {!isAccessDeniedForMutate && (
+          {canOnboard && (
             <button 
               onClick={() => setShowAddModal(true)}
               className="ml-auto bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg px-3.5 py-1.5 flex items-center gap-1.5 cursor-pointer shadow-md shadow-blue-500/10"
@@ -308,6 +340,71 @@ export default function MembersView({ members, onAddMember, onUpdateMember, role
               </div>
             </div>
 
+            {/* KYC Identity Verification Documents (KYC) */}
+            <div className="p-4 bg-slate-900/60 rounded-xl border border-slate-850 space-y-3.5 text-xs text-slate-350">
+              <div className="text-[10px] font-mono text-blue-400 tracking-wider font-bold uppercase pb-1 border-b border-slate-800/40 flex justify-between items-center">
+                <span>Identity Verification Documents</span>
+                <span className={`px-2 py-0.5 rounded text-[8px] font-bold ${
+                  selectedMember.kycStatus === 'Approved' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20' :
+                  selectedMember.kycStatus === 'Rejected' ? 'bg-rose-500/15 text-rose-450 border border-rose-500/20' :
+                  'bg-amber-500/15 text-amber-400 border border-amber-500/20 animate-pulse'
+                }`}>
+                  {selectedMember.kycStatus || 'Pending'}
+                </span>
+              </div>
+              
+              <div className="grid grid-cols-3 gap-2">
+                <div className="space-y-1">
+                  <span className="text-[8px] text-slate-400 font-mono block text-center uppercase tracking-wider font-semibold">ID Front</span>
+                  <a href={selectedMember.kycIdUrl || "https://images.unsplash.com/photo-1554774853-aae0a22c8aa4?w=400&q=80"} target="_blank" rel="noopener noreferrer" className="block relative h-12 border border-slate-800/80 rounded-lg overflow-hidden group hover:border-blue-500 cursor-zoom-in">
+                    <img src={selectedMember.kycIdUrl || "https://images.unsplash.com/photo-1554774853-aae0a22c8aa4?w=400&q=80"} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-200" alt="ID Front" />
+                  </a>
+                </div>
+
+                <div className="space-y-1">
+                  <span className="text-[8px] text-slate-400 font-mono block text-center uppercase tracking-wider font-semibold">ID Back</span>
+                  <a href={selectedMember.kycProofUrl || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80"} target="_blank" rel="noopener noreferrer" className="block relative h-12 border border-slate-800/80 rounded-lg overflow-hidden group hover:border-blue-500 cursor-zoom-in">
+                    <img src={selectedMember.kycProofUrl || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80"} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-200" alt="ID Back" />
+                  </a>
+                </div>
+
+                <div className="space-y-1">
+                  <span className="text-[8px] text-slate-400 font-mono block text-center uppercase tracking-wider font-semibold">Selfie</span>
+                  <a href={selectedMember.kycSelfieUrl || selectedMember.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80"} target="_blank" rel="noopener noreferrer" className="block relative h-12 border border-slate-800/80 rounded-lg overflow-hidden group hover:border-blue-500 cursor-zoom-in">
+                    <img src={selectedMember.kycSelfieUrl || selectedMember.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80"} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-200" alt="Selfie" />
+                  </a>
+                </div>
+              </div>
+
+              {/* KYC Decision for Admin/Supervisor */}
+              {canOversee && selectedMember.kycStatus !== 'Approved' && (
+                <div className="pt-2.5 flex gap-2 justify-end border-t border-slate-800/40 mt-1 pb-0.5">
+                  <button
+                    onClick={async () => {
+                      try {
+                        await onUpdateMember(selectedMember.memberId, { kycStatus: 'Rejected' });
+                        setSelectedMember({ ...selectedMember, kycStatus: 'Rejected' });
+                      } catch (err: any) { alert(err.message || 'Error processing reject'); }
+                    }}
+                    className="px-2.5 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg font-bold text-[10px] transition-colors leading-none cursor-pointer border border-rose-500/20"
+                  >
+                    Reject KYC Docs
+                  </button>
+                  <button
+                    onClick={async () => {
+                      try {
+                        await onUpdateMember(selectedMember.memberId, { kycStatus: 'Approved' });
+                        setSelectedMember({ ...selectedMember, kycStatus: 'Approved' });
+                      } catch (err: any) { alert(err.message || 'Error processing approve'); }
+                    }}
+                    className="px-2.5 py-1.5 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 rounded-lg font-bold text-[10px] transition-colors leading-none cursor-pointer border border-emerald-500/20"
+                  >
+                    Approve KYC Docs
+                  </button>
+                </div>
+              )}
+            </div>
+
             {/* Borrow history */}
             <div className="p-4 bg-slate-900/60 rounded-xl border border-slate-850 text-xs space-y-3">
               <div className="text-[10px] font-mono text-blue-400 tracking-wider font-bold uppercase pb-1 border-b border-slate-800/40">Credit Agreement index</div>
@@ -328,7 +425,7 @@ export default function MembersView({ members, onAddMember, onUpdateMember, role
             </div>
 
             {/* Admin Policy Actions panel */}
-            {!isAccessDeniedForMutate && (
+            {canOversee && (
               <div className="p-4 bg-slate-900/40 border border-slate-800 rounded-xl space-y-3">
                 <div className="text-[10px] font-mono text-slate-400 uppercase tracking-widest font-bold">Policy Supervision actions</div>
                 
@@ -481,6 +578,98 @@ export default function MembersView({ members, onAddMember, onUpdateMember, role
                     <option value="Gold">Gold Tier</option>
                     <option value="Platinum">Platinum Tier</option>
                   </select>
+                </div>
+              </div>
+
+              {/* Upload section */}
+              <div className="space-y-2 border-t border-slate-800/60 pt-3">
+                <div className="flex justify-between items-center text-[10px] uppercase font-mono font-bold tracking-wider">
+                  <span className="text-slate-400">Security & KYC Photos Identification</span>
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      setKycIdUrl("https://images.unsplash.com/photo-1554774853-aae0a22c8aa4?w=400&q=80");
+                      setKycProofUrl("https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80");
+                      setKycSelfieUrl("https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80");
+                    }} 
+                    className="text-[9px] text-blue-400 hover:underline hover:text-blue-300 font-bold tracking-tight cursor-pointer"
+                  >
+                    ⚡ Demo Attachments
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 text-[10px]">
+                  {/* Front ID */}
+                  <div className="space-y-1">
+                    <span className="text-[9px] text-slate-400 block font-semibold text-center">ID Front</span>
+                    <div className="relative border border-dashed border-slate-850 hover:border-blue-500 rounded-xl p-1 bg-slate-950/40 text-center h-16 flex items-center justify-center transition-all cursor-pointer">
+                      {kycIdUrl ? (
+                        <div className="relative w-full h-full">
+                          <img src={kycIdUrl} className="h-full w-full object-cover rounded" alt="Front ID" />
+                          <button type="button" onClick={() => setKycIdUrl('')} className="absolute -top-1 -right-1 bg-rose-600 text-white rounded-full w-3.5 h-3.5 text-[8px] flex items-center justify-center font-bold">✕</button>
+                        </div>
+                      ) : (
+                        <div>
+                          <span className="text-[8px] text-slate-400 block font-medium">Click</span>
+                          <span className="text-[7px] text-slate-500 block leading-none">Upload Front</span>
+                        </div>
+                      )}
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={(e) => handleFileChange(e, setKycIdUrl)} 
+                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" 
+                      />
+                    </div>
+                  </div>
+
+                  {/* Back ID */}
+                  <div className="space-y-1">
+                    <span className="text-[9px] text-slate-400 block font-semibold text-center">ID Back</span>
+                    <div className="relative border border-dashed border-slate-850 hover:border-blue-500 rounded-xl p-1 bg-slate-950/40 text-center h-16 flex items-center justify-center transition-all cursor-pointer">
+                      {kycProofUrl ? (
+                        <div className="relative w-full h-full">
+                          <img src={kycProofUrl} className="h-full w-full object-cover rounded" alt="Back ID" />
+                          <button type="button" onClick={() => setKycProofUrl('')} className="absolute -top-1 -right-1 bg-rose-600 text-white rounded-full w-3.5 h-3.5 text-[8px] flex items-center justify-center font-bold">✕</button>
+                        </div>
+                      ) : (
+                        <div>
+                          <span className="text-[8px] text-slate-400 block font-medium">Click</span>
+                          <span className="text-[7px] text-slate-500 block leading-none">Upload Back</span>
+                        </div>
+                      )}
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={(e) => handleFileChange(e, setKycProofUrl)} 
+                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" 
+                      />
+                    </div>
+                  </div>
+
+                  {/* Member Selfie */}
+                  <div className="space-y-1">
+                    <span className="text-[9px] text-slate-400 block font-semibold text-center">His Photo</span>
+                    <div className="relative border border-dashed border-slate-850 hover:border-blue-500 rounded-xl p-1 bg-slate-950/40 text-center h-16 flex items-center justify-center transition-all cursor-pointer">
+                      {kycSelfieUrl ? (
+                        <div className="relative w-full h-full">
+                          <img src={kycSelfieUrl} className="h-full w-full object-cover rounded" alt="Selfie" />
+                          <button type="button" onClick={() => setKycSelfieUrl('')} className="absolute -top-1 -right-1 bg-rose-600 text-white rounded-full w-3.5 h-3.5 text-[8px] flex items-center justify-center font-bold">✕</button>
+                        </div>
+                      ) : (
+                        <div>
+                          <span className="text-[8px] text-slate-400 block font-medium">Click</span>
+                          <span className="text-[7px] text-slate-500 block leading-none">Upload Profile</span>
+                        </div>
+                      )}
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={(e) => handleFileChange(e, setKycSelfieUrl)} 
+                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" 
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
 

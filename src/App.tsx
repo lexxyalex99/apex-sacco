@@ -63,6 +63,13 @@ export default function App() {
 
   // Security Inactivity Session Tracking (15 mins)
   const [sessionExpired, setSessionExpired] = useState(false);
+  const [secondsRemaining, setSecondsRemaining] = useState<number | null>(null);
+  const lastActivityTimeRef = React.useRef<number>(Date.now());
+  const secondsRemainingRef = React.useRef<number | null>(null);
+
+  useEffect(() => {
+    secondsRemainingRef.current = secondsRemaining;
+  }, [secondsRemaining]);
 
   // Real-time live system notification streams (Fintech requirement #3)
   const [liveNotifications, setLiveNotifications] = useState<any[]>([]);
@@ -172,35 +179,55 @@ export default function App() {
     };
   }, []);
 
-  // Inactivity tracking
+  // Inactivity tracking with 60-second precise warning countdown
   useEffect(() => {
-    if (!token || !user) return;
+    if (!token || !user) {
+      setSecondsRemaining(null);
+      return;
+    }
 
-    let inactivityTimer: NodeJS.Timeout;
+    lastActivityTimeRef.current = Date.now();
+    setSecondsRemaining(null);
 
-    const resetInactivityTimer = () => {
-      clearTimeout(inactivityTimer);
-      // Automatically log out after 15 minutes of inactivity
-      inactivityTimer = setTimeout(() => {
-        setSessionExpired(true);
-        handleLocalLogout();
-      }, 15 * 60 * 1000);
+    const resetActivity = () => {
+      lastActivityTimeRef.current = Date.now();
+      if (secondsRemainingRef.current !== null) {
+        setSecondsRemaining(null);
+      }
     };
 
-    // Activity listeners
-    window.addEventListener('mousemove', resetInactivityTimer);
-    window.addEventListener('keydown', resetInactivityTimer);
-    window.addEventListener('click', resetInactivityTimer);
-    window.addEventListener('scroll', resetInactivityTimer);
+    // Attach activity listeners
+    window.addEventListener('mousemove', resetActivity);
+    window.addEventListener('keydown', resetActivity);
+    window.addEventListener('click', resetActivity);
+    window.addEventListener('scroll', resetActivity);
 
-    resetInactivityTimer(); // Start tracking initial boot session
+    const checkInterval = setInterval(() => {
+      const elapsedMs = Date.now() - lastActivityTimeRef.current;
+      const totalSessionMs = 15 * 60 * 1000;
+      const remainingMs = totalSessionMs - elapsedMs;
+      const remainingSecs = Math.ceil(remainingMs / 1000);
+
+      if (remainingSecs <= 0) {
+        clearInterval(checkInterval);
+        setSessionExpired(true);
+        setSecondsRemaining(null);
+        handleLocalLogout();
+      } else if (remainingSecs <= 60) {
+        setSecondsRemaining(remainingSecs);
+      } else {
+        if (secondsRemainingRef.current !== null) {
+          setSecondsRemaining(null);
+        }
+      }
+    }, 1000);
 
     return () => {
-      clearTimeout(inactivityTimer);
-      window.removeEventListener('mousemove', resetInactivityTimer);
-      window.removeEventListener('keydown', resetInactivityTimer);
-      window.removeEventListener('click', resetInactivityTimer);
-      window.removeEventListener('scroll', resetInactivityTimer);
+      clearInterval(checkInterval);
+      window.removeEventListener('mousemove', resetActivity);
+      window.removeEventListener('keydown', resetActivity);
+      window.removeEventListener('click', resetActivity);
+      window.removeEventListener('scroll', resetActivity);
     };
   }, [token, user]);
 
@@ -456,6 +483,11 @@ export default function App() {
           onQuickAction={handleTopGlobalQuickAction}
           theme={theme}
           toggleTheme={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          secondsRemaining={secondsRemaining}
+          onExtendSession={() => {
+            lastActivityTimeRef.current = Date.now();
+            setSecondsRemaining(null);
+          }}
         />
 
         {/* 3. Central Router View Body Scrollport */}

@@ -48,7 +48,8 @@ const DEFAULT_SETTINGS: SACCOSettings = {
   mpesaShortcode: "721900",
   mpesaCallbackUrl: "https://api.apexsacco.co.ke/v1/mpesa-callback",
   registrationFee: 1000,
-  penaltyOverdueRate: 5
+  penaltyOverdueRate: 5,
+  strictKycLoanApproval: true
 };
 
 // Lazy loaded Prisma Client wrapper

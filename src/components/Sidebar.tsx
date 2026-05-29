@@ -38,12 +38,12 @@ export default function Sidebar({
   // Sidebar mapping: name, icon, key, allowed roles
   const menuItems = [
     { name: 'Dashboard', icon: LayoutDashboard, key: 'dashboard', roles: ['Admin', 'Loan Officer', 'Accountant', 'Member'] },
-    { name: 'Member Profiles', icon: Users, key: 'members', roles: ['Admin', 'Loan Officer', 'Accountant', 'Member'] },
-    { name: 'Savings Portfolio', icon: PiggyBank, key: 'savings', roles: ['Admin', 'Loan Officer', 'Accountant', 'Member'] },
-    { name: 'Credit Loans', icon: HandCoins, key: 'loans', roles: ['Admin', 'Loan Officer', 'Accountant', 'Member'] },
-    { name: 'Transaction Logs', icon: History, key: 'transactions', roles: ['Admin', 'Loan Officer', 'Accountant', 'Member'] },
+    { name: 'Member Profiles', icon: Users, key: 'members', roles: ['Admin', 'Loan Officer', 'Accountant'] },
+    { name: 'Savings Portfolio', icon: PiggyBank, key: 'savings', roles: ['Admin', 'Loan Officer', 'Accountant'] },
+    { name: 'Credit Loans', icon: HandCoins, key: 'loans', roles: ['Admin', 'Loan Officer', 'Accountant'] },
+    { name: 'Transaction Logs', icon: History, key: 'transactions', roles: ['Admin', 'Loan Officer', 'Accountant'] },
     { name: 'System Analytics', icon: TrendingUp, key: 'analytics', roles: ['Admin', 'Loan Officer', 'Accountant'] },
-    { name: 'Immutable Logs', icon: FileLock2, key: 'audit', roles: ['Admin', 'Loan Officer', 'Accountant'] },
+    { name: 'Immutable Logs', icon: FileLock2, key: 'audit', roles: ['Admin'] },
     { name: 'SACCO Policies', icon: Settings, key: 'settings', roles: ['Admin'] },
   ];
 

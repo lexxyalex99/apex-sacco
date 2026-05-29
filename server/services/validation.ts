@@ -5,7 +5,10 @@ export const registerSchema = z.object({
   email: z.string().email("Invalid corporate or personal email address layout."),
   phone: z.string().regex(/^\+254\s?\d{3}\s?\d{3}\s?\d{3}$|^\d{10}$/, "Phone must follow modern format like (+254 7XX XXX XXX or 07XX XXX XXX)"),
   nationalId: z.string().min(7, "National Identity number should contain between 7 to 10 digits.").max(12),
-  password: z.string().min(6, "Security password must have at least 6 characters.")
+  password: z.string().min(6, "Security password must have at least 6 characters."),
+  kycIdUrl: z.string().optional(),
+  kycProofUrl: z.string().optional(),
+  kycSelfieUrl: z.string().optional()
 });
 
 export const loginSchema = z.object({
