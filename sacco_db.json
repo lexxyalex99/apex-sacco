@@ -8,7 +8,7 @@
       "status": "Active",
       "passwordHash": "$2b$10$IsQcWmTZWW4rvMD./MfPBuLfhVyJ0ut9HfikuXJ8r9yeus6cCgdoO",
       "avatarUrl": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
-      "lastLogin": "2026-05-29T10:34:25.584Z",
+      "lastLogin": "2026-05-29T11:08:11.028Z",
       "failedAttempts": 0,
       "lockoutUntil": null
     },
@@ -591,25 +591,25 @@
       "isIntegrityOk": true
     },
     {
-      "id": "aud-9-4535",
-      "timestamp": "2026-05-29T10:34:25.585Z",
+      "id": "aud-9-6337",
+      "timestamp": "2026-05-29T11:08:11.029Z",
       "action": "User Session Sparked",
       "performedByEmail": "admin@sacco.co.ke",
       "performedByRole": "Admin",
-      "details": "Logged in successfully. Access token & 7d refresh token initialized. Verification OTP generated: 951413",
-      "hash": "3354132b74207e4133ea800e24c730e6a536d9b4b0138c0b26971a999c900c01",
+      "details": "Logged in successfully. Access token & 7d refresh token initialized. Verification OTP generated: 490431",
+      "hash": "b00fda03a4b3fc40f16a1b6f687719a09160e02279a371acd885e632d893a8ca",
       "prevHash": "c1f2e134345df283eeb05611f0382568a60c0032d30c579793efa646c6cff165",
       "isIntegrityOk": true
     },
     {
-      "id": "aud-10-7416",
-      "timestamp": "2026-05-29T10:34:25.885Z",
+      "id": "aud-10-9272",
+      "timestamp": "2026-05-29T11:08:11.341Z",
       "action": "Loan Portfolio Overdue State",
       "performedByEmail": "system-vigilance@apexsacco.co.ke",
       "performedByRole": "Admin",
       "details": "Loan LN-5292 for Member Abel Kiprop flagged Overdue. Penalties compiled.",
-      "hash": "b686d3ad71abf71996cf877e18ca6c38a2238634c7107a46f46104b155831114",
-      "prevHash": "3354132b74207e4133ea800e24c730e6a536d9b4b0138c0b26971a999c900c01",
+      "hash": "272972fa981217ad4147b54308d5567b12173fab4866533965c906ce66bb6789",
+      "prevHash": "b00fda03a4b3fc40f16a1b6f687719a09160e02279a371acd885e632d893a8ca",
       "isIntegrityOk": true
     }
   ],
@@ -626,22 +626,22 @@
   },
   "otpSessions": [
     {
-      "id": "otp-1780050865575-140",
+      "id": "otp-1780052891010-2560",
       "userId": "usr-1",
       "userEmail": "admin@sacco.co.ke",
-      "otpCode": "951413",
-      "expiresAt": "2026-05-29T10:44:25.575Z",
+      "otpCode": "490431",
+      "expiresAt": "2026-05-29T11:18:11.010Z",
       "isVerified": false,
       "attempts": 0
     }
   ],
   "refreshTokens": [
     {
-      "id": "rt-1780050865581-7",
+      "id": "rt-1780052891022-6947",
       "userId": "usr-1",
-      "token": "bf3a2b24810b5fe3b70c95da58c7d38243c0cc8b804312344dad64a6a19a83dbd6ea0de2f83154fe",
-      "expiresAt": "2026-06-05T10:34:25.581Z",
-      "createdAt": "2026-05-29T10:34:25.581Z",
+      "token": "0cf138c067d3e18da92d3b23ef58853dd1ddebeab663fb23f58cd6a6afdb18a8aff4c26577e72495",
+      "expiresAt": "2026-06-05T11:08:11.022Z",
+      "createdAt": "2026-05-29T11:08:11.022Z",
       "revoked": false
     }
   ]

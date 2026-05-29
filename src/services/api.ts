@@ -171,6 +171,24 @@ export const api = {
     return res.json();
   },
 
+  async getUsers() {
+    const res = await secureFetch(`${API_BASE}/auth/users`);
+    if (!res.ok) throw new Error('Failed to retrieve active users directory');
+    return res.json();
+  },
+
+  async updateUserProfile(userId: string, payload: any) {
+    const res = await secureFetch(`${API_BASE}/auth/users/${userId}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || 'Failed to update user profile');
+    }
+    return res.json();
+  },
+
   async refreshToken() {
     const storedRefreshToken = localStorage.getItem('sacco_refresh_token');
     const res = await fetch(`${API_BASE}/auth/refresh`, {

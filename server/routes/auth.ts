@@ -716,4 +716,83 @@ router.post('/biometric-login', async (req: Request, res: Response) => {
   });
 });
 
+// GET /api/auth/users (Fetch all registered system users/personnel)
+router.get('/users', authenticateToken, (req: any, res: Response) => {
+  const db = loadDatabase();
+  // Map users mapping to avoid leaking passwords hashes
+  const safeUsers = db.users.map(u => ({
+    id: u.id,
+    email: u.email,
+    role: u.role,
+    fullName: u.fullName,
+    memberId: u.memberId,
+    status: u.status,
+    avatarUrl: u.avatarUrl
+  }));
+  res.json(safeUsers);
+});
+
+// PUT /api/auth/users/:userId (Update or Rename specific user/personnel profiles)
+router.put('/users/:userId', authenticateToken, (req: any, res: Response) => {
+  const { userId } = req.params;
+  const { fullName, email, status, role } = req.body;
+
+  // Security Gate: You must edit YOUR OWN account, or be an ADMIN to edit ANY account
+  if (req.user.id !== userId && req.user.role !== 'Admin') {
+    res.status(403).json({ error: "Access Denied. You do not have permissions to modify another staff member's profile." });
+    return;
+  }
+
+  const db = loadDatabase();
+  const user = db.users.find(u => u.id === userId);
+  if (!user) {
+    res.status(404).json({ error: `System profile was not found in active records.` });
+    return;
+  }
+
+  const oldName = user.fullName;
+  const oldRole = user.role;
+
+  // Perform updates
+  if (fullName) {
+    user.fullName = fullName;
+    // Mirror name update onto member profile if assigned
+    if (user.memberId) {
+      const member = db.members.find(m => m.memberId === user.memberId);
+      if (member) member.fullName = fullName;
+    }
+  }
+  if (email) user.email = email;
+  if (status && req.user.role === 'Admin') user.status = status;
+  if (role && req.user.role === 'Admin') {
+    // Prevent locking out the absolute last admin
+    if (user.role === 'Admin' && role !== 'Admin' && userId === req.user.id) {
+      res.status(400).json({ error: "Gating safeguard: You cannot change your own Admin role as the active administrator." });
+      return;
+    }
+    user.role = role as any;
+  }
+
+  saveDatabase(db);
+  appendAuditLog(
+    "Personnel Profile Redesigned",
+    req.user.email,
+    req.user.role,
+    `Recalibrated profile: Renamed '${oldName}' to '${user.fullName}' [Email: ${user.email}, Role: ${user.role}].`
+  );
+
+  res.json({
+    success: true,
+    message: "Personnel details synchronized successfully across core and mirror databases.",
+    user: {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      fullName: user.fullName,
+      memberId: user.memberId,
+      status: user.status
+    }
+  });
+});
+
 export default router;

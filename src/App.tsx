@@ -540,6 +540,9 @@ export default function App() {
                   onUpdateSettings={handleUpdateSACCOSettings}
                   theme={theme}
                   setTheme={setTheme}
+                  currentUser={user}
+                  onRefreshData={refreshAllData}
+                  onUpdateCurrentUserFullName={(name) => setUser(u => u ? { ...u, fullName: name } : null)}
                 />
               )}
 
