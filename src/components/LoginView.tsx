@@ -740,42 +740,30 @@ export default function LoginView({ onLoginSuccess }: LoginProps) {
 
           </div>
 
-          {/* Quick Access Presets (Extremely elegant for testing evaluations) */}
+          {/* About our SACCO Section */}
           {!otpRequired && !registerMode && !forgotPasswordMode && (
-            <div className="space-y-2 pt-2">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block text-center">Interactive Role Presets (Password: password123)</span>
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <button 
-                  onClick={() => handleDemoPreset("admin@sacco.co.ke")}
-                  className="p-2 text-left bg-slate-900/40 hover:bg-slate-850 border border-slate-800 hover:border-blue-500 rounded-xl transition-all cursor-pointer flex flex-col justify-between"
-                >
-                  <span className="font-bold text-white">Grace Kendi</span>
-                  <span className="text-[10px] text-blue-400 font-mono">Admin</span>
-                </button>
-
-                <button 
-                  onClick={() => handleDemoPreset("officer@sacco.co.ke")}
-                  className="p-2 text-left bg-slate-900/40 hover:bg-slate-850 border border-slate-800 hover:border-[#a855f7] rounded-xl transition-all cursor-pointer flex flex-col justify-between"
-                >
-                  <span className="font-bold text-white">Paul Omwamba</span>
-                  <span className="text-[10px] text-purple-400 font-mono">Loan Officer</span>
-                </button>
-
-                <button 
-                  onClick={() => handleDemoPreset("accountant@sacco.co.ke")}
-                  className="p-2 text-left bg-slate-900/40 hover:bg-slate-850 border border-slate-800 hover:border-[#10b981] rounded-xl transition-all cursor-pointer flex flex-col justify-between"
-                >
-                  <span className="font-bold text-white">Mercy Chep</span>
-                  <span className="text-[10px] text-emerald-400 font-mono">Accountant</span>
-                </button>
-
-                <button 
-                  onClick={() => handleDemoPreset("member@sacco.co.ke")}
-                  className="p-2 text-left bg-slate-900/40 hover:bg-slate-850 border border-slate-800 hover:border-amber-500 rounded-xl transition-all cursor-pointer flex flex-col justify-between"
-                >
-                  <span className="font-bold text-white">Joshua Mwangi</span>
-                  <span className="text-[10px] text-amber-400 font-mono">Member (SACCO)</span>
-                </button>
+            <div className="bg-[#101626]/45 p-5 border border-slate-800/65 rounded-2xl space-y-3.5 mt-2 text-xs">
+              <h3 className="text-xs font-bold text-slate-150 uppercase tracking-widest flex items-center gap-1.5 border-b border-slate-800/40 pb-1.5">
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                <span>About Apex Digital SACCO</span>
+              </h3>
+              <div className="text-[11px] text-slate-400 leading-relaxed space-y-2 select-none">
+                <p>
+                  <strong>Apex Co-operative SACCO</strong> is a licensed Tier-1 digital financial cooperative. We empower our members through unified micro-savings pool management, competitive low-interest credit loans, and automated dividends distribution.
+                </p>
+                <p>
+                  Fully authorized and regulated by the <strong>Sacco Societies Regulatory Authority (SASRA)</strong> under Co-operatives Act of Kenya.
+                </p>
+                <div className="grid grid-cols-2 gap-2 text-[10px] font-mono mt-1 pt-1.5 border-t border-slate-800/40 text-slate-400">
+                  <div>
+                    <span className="text-slate-450 block font-semibold uppercase leading-none mb-0.5">Contact Line:</span>
+                    <span>+254 722 000 000</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-450 block font-semibold uppercase leading-none mb-0.5">Location:</span>
+                    <span>Mombasa Rd, Nairobi</span>
+                  </div>
+                </div>
               </div>
             </div>
           )}

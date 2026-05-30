@@ -11,7 +11,8 @@ import {
   Sparkles,
   Sun,
   Moon,
-  Clock
+  Clock,
+  Menu
 } from 'lucide-react';
 import { UserRole } from '../types.js';
 
@@ -24,6 +25,7 @@ interface HeaderProps {
   toggleTheme: () => void;
   secondsRemaining?: number | null;
   onExtendSession?: () => void;
+  onToggleSidebar?: () => void;
 }
 
 export default function Header({ 
@@ -34,7 +36,8 @@ export default function Header({
   theme, 
   toggleTheme,
   secondsRemaining,
-  onExtendSession
+  onExtendSession,
+  onToggleSidebar
 }: HeaderProps) {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
@@ -70,7 +73,14 @@ export default function Header({
         </div>
       </div>
 
-      <div className="sm:hidden flex items-center">
+      <div className="md:hidden flex items-center gap-2">
+        <button
+          onClick={onToggleSidebar}
+          className="p-1.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 rounded-lg text-slate-350 cursor-pointer"
+          title="Toggle Navigation Menu"
+        >
+          <Menu className="w-4 h-4 text-white" />
+        </button>
         <span className="font-extrabold text-xs text-blue-500 tracking-tight">APEX SACCO</span>
       </div>
 

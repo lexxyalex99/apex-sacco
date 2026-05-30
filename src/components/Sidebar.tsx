@@ -38,6 +38,7 @@ export default function Sidebar({
   // Sidebar mapping: name, icon, key, allowed roles
   const menuItems = [
     { name: 'Dashboard', icon: LayoutDashboard, key: 'dashboard', roles: ['Admin', 'Loan Officer', 'Accountant', 'Member'] },
+    { name: 'My Profile', icon: UserCheck, key: 'profile', roles: ['Admin', 'Loan Officer', 'Accountant', 'Member'] },
     { name: 'Member Profiles', icon: Users, key: 'members', roles: ['Admin', 'Loan Officer', 'Accountant'] },
     { name: 'Savings Portfolio', icon: PiggyBank, key: 'savings', roles: ['Admin', 'Loan Officer', 'Accountant'] },
     { name: 'Credit Loans', icon: HandCoins, key: 'loans', roles: ['Admin', 'Loan Officer', 'Accountant'] },
@@ -50,7 +51,11 @@ export default function Sidebar({
   const filteredItems = menuItems.filter(item => item.roles.includes(role));
 
   return (
-    <aside className={`bg-[#0d1425] border-r border-[#1e293b]/50 text-[#e2e8f0] flex flex-col justify-between transition-all duration-300 relative ${collapsed ? 'w-20' : 'w-64'}`}>
+    <aside className={`bg-[#0d1425] border-r border-[#1e293b]/50 text-[#e2e8f0] flex flex-col justify-between transition-all duration-300 relative ${
+      collapsed 
+        ? 'w-20 md:flex hidden' 
+        : 'w-64 md:flex fixed inset-y-0 left-0 z-50 md:relative md:inset-auto md:z-0 shadow-2xl md:shadow-none'
+    }`}>
       
       {/* Collapse Trigger Button */}
       <button 

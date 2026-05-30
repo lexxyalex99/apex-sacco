@@ -35,6 +35,7 @@ import LoansView from './components/LoansView.js';
 import TransactionsView from './components/TransactionsView.js';
 import AuditView from './components/AuditView.js';
 import SettingsView from './components/SettingsView.js';
+import ProfileView from './components/ProfileView.js';
 
 export default function App() {
   const [token, setToken] = useState<string | null>(localStorage.getItem('sacco_token'));
@@ -472,6 +473,14 @@ export default function App() {
         onLogout={handleLocalLogout}
       />
 
+      {/* Responsive mobile backdrop overlay */}
+      {!sidebarCollapsed && (
+        <div 
+          onClick={() => setSidebarCollapsed(true)}
+          className="md:hidden fixed inset-0 bg-black/60 z-40 transition-opacity duration-300 pointer-events-auto"
+        />
+      )}
+
       {/* 2. Main content block wrapper */}
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         
@@ -488,6 +497,7 @@ export default function App() {
             lastActivityTimeRef.current = Date.now();
             setSecondsRemaining(null);
           }}
+          onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
         />
 
         {/* 3. Central Router View Body Scrollport */}
@@ -575,6 +585,18 @@ export default function App() {
                   currentUser={user}
                   onRefreshData={refreshAllData}
                   onUpdateCurrentUserProfile={(name, avatar) => setUser(u => u ? { ...u, fullName: name, avatarUrl: avatar || u.avatarUrl } : null)}
+                />
+              )}
+
+              {currentTab === 'profile' && user && (
+                <ProfileView 
+                  currentUser={currentUserMember ? { ...user, id: user.id || '', email: user.email, role: user.role, fullName: user.fullName, memberId: currentUserMember.memberId, avatarUrl: user.avatarUrl, status: user.status } : { ...user, id: user.id || '', email: user.email, role: user.role, fullName: user.fullName, avatarUrl: user.avatarUrl, status: user.status }}
+                  currentUserMember={currentUserMember}
+                  onUpdateCurrentUserProfile={async (name, avatar) => {
+                    setUser(u => u ? { ...u, fullName: name, avatarUrl: avatar || u.avatarUrl } : null);
+                  }}
+                  onUpdateMember={handleUpdateMember}
+                  recentTransactions={transactions}
                 />
               )}
 
